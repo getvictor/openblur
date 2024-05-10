@@ -13,3 +13,7 @@ This project is under active development. Pull requests and issues are welcome.
 - Technical information (e.g. IP addresses, serial numbers, API tokens).
 - Financial information (e.g. credit card numbers, bank account numbers).
 - Any other information that you don't want to be seen by others.
+
+## Install OpenBlur video instructions
+
+[![Install OpenBlur Chrome extension](http://img.youtube.com/vi/0uQiV4Bxc5I/0.jpg)](http://www.youtube.com/watch?v=0uQiV4Bxc5I)
