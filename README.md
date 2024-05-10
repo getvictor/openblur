@@ -14,8 +14,12 @@ This project is under active development. Pull requests and issues are welcome.
 - Financial information (e.g. credit card numbers, bank account numbers).
 - Any other information that you don't want to be seen by others.
 
-## Install OpenBlur
+## Install OpenBlur video instructions
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=0uQiV4Bxc5I
 " target="_blank"><img src="http://img.youtube.com/vi/0uQiV4Bxc5I/0.jpg"
-alt="Install OpenBlur Chrome extension" width="240" height="180" border="10" /></a>
+alt="Install OpenBlur Chrome extension" width="1280" height="720" border="10" /></a>
+
+## Or like this
+
+[![Install OpenBlur Chrome extension](http://img.youtube.com/vi/0uQiV4Bxc5I/0.jpg)](http://www.youtube.com/watch?v=0uQiV4Bxc5I)
