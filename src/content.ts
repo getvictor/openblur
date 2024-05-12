@@ -51,9 +51,9 @@ chrome.storage.sync.get(keys, (data) => {
         enabled = false
     }
     for (let i = 0; i < NUMBER_OF_ITEMS; i++) {
-        const item = data[`item_${i}`]
-        if (item) {
-            contentToBlur.push(item)
+        const item: string = data[`item_${i}`]
+        if (item && item.trim().length > 0) {
+            contentToBlur.push(item.trim())
         }
     }
     if (enabled) {

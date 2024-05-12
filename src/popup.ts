@@ -4,7 +4,7 @@ console.log("Hello, world from popup!")
 
 const checkbox = document.getElementById("enabled") as HTMLInputElement
 chrome.storage.sync.get("mode", (data) => {
-    checkbox.checked = !(data.mode && data.mode.id === "off");
+    checkbox.checked = !(data.mode && data.mode.id === "off")
     const mode = data.mode || MODES[1]
     chrome.action.setBadgeText({text: mode.text}).then(r => {})
     chrome.action.setBadgeBackgroundColor({color: mode.color}).then(r => {})
@@ -12,7 +12,7 @@ chrome.storage.sync.get("mode", (data) => {
 checkbox.addEventListener("change", (event) => {
     if (event.target instanceof HTMLInputElement) {
         const mode = event.target.checked ? MODES[1] : MODES[0]
-        chrome.storage.sync.set({mode}, () => {})
+        chrome.storage.sync.set({"mode": mode}, () => {})
         chrome.action.setBadgeText({text: mode.text}).then(r => {})
         chrome.action.setBadgeBackgroundColor({color: mode.color}).then(r => {})
     }
