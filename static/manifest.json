@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "OpenBlur",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Automatically hide and blur sensitive information on any webpage, including emails and names.",
   "action": {
     "default_popup": "popup.html"

@@ -20,7 +20,7 @@ This project is under active development. Pull requests and issues are welcome.
 
 ## Building the extension for release and distribution
 - Run `npm version X.X.X --no-git-tag-version` to update the version in `package.json` and `package-lock.json`
-- Update `src/manifest.json` with the new version number
+- Update `static/manifest.json` with the new version number
 - `rm -rf dist`
 - Run `npm run build` to generate the new `dist` folder
 - `cd dist && zip -vr openblur.zip . -x "*.DS_Store"`

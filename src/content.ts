@@ -1,7 +1,7 @@
 import { NUMBER_OF_ITEMS} from "./constants"
 
 const contentToBlur: string[] = []
-const blurFilter = "blur(6px)"
+const blurFilter = "blur(0.343em)" // This unique filter value identifies the OpenBlur filter.
 
 function processNode(node: Node) {
     if (node.childNodes.length > 0) {
@@ -30,7 +30,7 @@ function blurElement(elem: HTMLElement) {
     console.debug("blurred id:" + elem.id + " class:" + elem.className + " tag:" + elem.tagName + " text:" + elem.textContent)
 }
 
-const observer = new MutationObserver((mutations, observer) => {
+const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
         if (mutation.addedNodes.length > 0) {
             mutation.addedNodes.forEach(processNode)
