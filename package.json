@@ -5,7 +5,8 @@
   "author": "getvictor",
   "license": "MIT",
   "scripts": {
-    "build": "webpack --mode production"
+    "build": "webpack --config webpack.prod.ts",
+    "start": "webpack --watch --config webpack.dev.ts"
   },
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.6",

@@ -1,6 +1,8 @@
+import path from 'path'
+import { Configuration } from 'webpack'
 import CopyWebpackPlugin from "copy-webpack-plugin";
 
-module.exports = {
+const config: Configuration = {
     entry: {
         background: './src/background.ts',
         content: './src/content.ts',
@@ -18,16 +20,16 @@ module.exports = {
             },
         ],
     },
+    output: {
+        filename: '[name].js',
+        path: path.resolve(__dirname, 'dist'),
+        clean: true, // Clean the output directory before emit.
+    },
     plugins: [
         new CopyWebpackPlugin({
-            patterns: [
-                { from: "./src/manifest.json" },
-                { from: "./src/popup.html" },
-                { from: "./src/popup.css" },
-            ],
+            patterns: [{from: 'static'}],
         }),
     ],
-    optimization: {
-        minimize: false,
-    },
 }
+
+export default config
