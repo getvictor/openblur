@@ -9,7 +9,7 @@ function processNode(node: Node) {
     }
     if (node.nodeType === Node.TEXT_NODE && node.textContent !== null && node.textContent.trim().length > 0) {
         const parent = node.parentElement
-        if (parent !== null && (parent.tagName === 'SCRIPT' || parent.style.filter === blurFilter)) {
+        if (parent !== null && (parent.tagName === 'SCRIPT' || parent.style.filter.includes(blurFilter))) {
             // Already blurred
             return
         }
@@ -26,7 +26,13 @@ function processNode(node: Node) {
 }
 
 function blurElement(elem: HTMLElement) {
-    elem.style.filter = blurFilter
+    if (elem.style.filter.length == 0) {
+        elem.style.filter = blurFilter
+    } else {
+        // The element already has a filter. Append our blur filter to the existing filter.
+        // We assume that the semicolon(;) is never present in the filter string. This has been the case in our limited testing.
+        elem.style.filter += ` ${blurFilter}`
+    }
     console.debug("blurred id:" + elem.id + " class:" + elem.className + " tag:" + elem.tagName + " text:" + elem.textContent)
 }
 
