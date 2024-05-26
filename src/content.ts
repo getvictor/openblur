@@ -8,6 +8,10 @@ let enabled = true
 
 console.debug("OpenBlur content script loaded")
 
+function unhideBody() {
+    document.body.style.visibility = "visible"
+}
+
 function processNode(node: Node) {
     if (node.childNodes.length > 0) {
         Array.from(node.childNodes).forEach(processNode)
@@ -83,6 +87,7 @@ function setLiterals(literals: string[]) {
     if (enabled) {
         observe()
     }
+    unhideBody()
 }
 
 chrome.storage.sync.get(null, (data) => {

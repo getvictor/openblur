@@ -1,0 +1,4 @@
+body {
+    /* Hide the content until OpenBlur processes the content and blurs the secrets. */
+    visibility: hidden;
+}
