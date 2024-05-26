@@ -1,7 +1,10 @@
 import { NUMBER_OF_ITEMS} from "./constants"
 
-const contentToBlur: string[] = []
+let contentToBlur: string[] = []
 const blurFilter = "blur(0.343em)" // This unique filter value identifies the OpenBlur filter.
+let enabled = true
+
+console.debug("OpenBlur content script loaded")
 
 function processNode(node: Node) {
     if (node.childNodes.length > 0) {
@@ -9,19 +12,28 @@ function processNode(node: Node) {
     }
     if (node.nodeType === Node.TEXT_NODE && node.textContent !== null && node.textContent.trim().length > 0) {
         const parent = node.parentElement
-        if (parent !== null && (parent.tagName === 'SCRIPT' || parent.style.filter.includes(blurFilter))) {
-            // Already blurred
-            return
+        if (parent !== null) {
+            if (parent.tagName === 'SCRIPT') {
+                return
+            } else if (parent.style.filter.includes(blurFilter)) {
+                // Already blurred
+                if (!enabled) {
+                    // We remove the blur filter if the extension is disabled.
+                    parent.style.filter = parent.style.filter.replace(blurFilter, "")
+                }
+                return
+            }
         }
         const text = node.textContent!
-        contentToBlur.some((content) => {
-            if (text.includes(content)) {
-                blurElement(parent!)
-                return true
-            }
-            return false
-        })
-
+        if (enabled) {
+            contentToBlur.some((content) => {
+                if (text.includes(content)) {
+                    blurElement(parent!)
+                    return true
+                }
+                return false
+            })
+        }
     }
 }
 
@@ -33,7 +45,7 @@ function blurElement(elem: HTMLElement) {
         // We assume that the semicolon(;) is never present in the filter string. This has been the case in our limited testing.
         elem.style.filter += ` ${blurFilter}`
     }
-    console.debug("blurred id:" + elem.id + " class:" + elem.className + " tag:" + elem.tagName + " text:" + elem.textContent)
+    console.debug("OpenBlur blurred element id:%s, class:%s, tag:%s, text:%s", elem.id, elem.className, elem.tagName, elem.textContent)
 }
 
 const observer = new MutationObserver((mutations) => {
@@ -46,31 +58,54 @@ const observer = new MutationObserver((mutations) => {
     })
 })
 
-let enabled = true
-const keys = ["mode"]
-for (let i = 0; i < NUMBER_OF_ITEMS; i++) {
-    keys.push(`item_${i}`)
+function observe() {
+    observer.observe(document, {
+        attributes: false,
+        characterData: true,
+        childList: true,
+        subtree: true,
+    })
+
+    // Loop through all elements on the page.
+    processNode(document)
 }
 
-chrome.storage.sync.get(keys, (data) => {
-    if (data.mode && data.mode.id === "off") {
-        enabled = false
-    }
+function setLiterals(literals: string[]) {
+    contentToBlur.length = 0
     for (let i = 0; i < NUMBER_OF_ITEMS; i++) {
-        const item: string = data[`item_${i}`]
+        const item: string = literals[i]
         if (item && item.trim().length > 0) {
             contentToBlur.push(item.trim())
         }
     }
     if (enabled) {
-        observer.observe(document, {
-            attributes: false,
-            characterData: true,
-            childList: true,
-            subtree: true,
-        })
+        observe()
+    }
+}
 
-        // Loop through all elements on the page.
-        processNode(document)
+chrome.storage.sync.get(null, (data) => {
+    if (data.mode && data.mode.id === "off") {
+        enabled = false
+    }
+    let literals: string[] = data.literals || []
+    setLiterals(literals);
+})
+
+// Listen for messages from popup.
+chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
+    console.debug("OpenBlur received message from popup", request)
+
+    if (request.mode) {
+        if (request.mode.id === "off") {
+            enabled = false
+            observer.disconnect()
+            processNode(document)
+        } else {
+            enabled = true
+            observe()
+        }
+    }
+    if (request.literals) {
+        setLiterals(request.literals)
     }
 })

@@ -1,33 +1,45 @@
 import { MODES, NUMBER_OF_ITEMS } from "./constants"
 
-console.log("Hello, world from popup!")
+console.debug("OpenBlur popup script loaded")
 
 const checkbox = document.getElementById("enabled") as HTMLInputElement
-chrome.storage.sync.get("mode", (data) => {
+chrome.storage.sync.get(null, (data) => {
+    console.debug("OpenBlur got data from storage", data)
     checkbox.checked = !(data.mode && data.mode.id === "off")
     const mode = data.mode || MODES[1]
-    chrome.action.setBadgeText({text: mode.text}).then(r => {})
-    chrome.action.setBadgeBackgroundColor({color: mode.color}).then(r => {})
-})
-checkbox.addEventListener("change", (event) => {
-    if (event.target instanceof HTMLInputElement) {
-        const mode = event.target.checked ? MODES[1] : MODES[0]
-        chrome.storage.sync.set({"mode": mode}, () => {})
-        chrome.action.setBadgeText({text: mode.text}).then(r => {})
-        chrome.action.setBadgeBackgroundColor({color: mode.color}).then(r => {})
+    void chrome.action.setBadgeText({text: mode.text})
+    void chrome.action.setBadgeBackgroundColor({color: mode.color})
+    let literals: string[] = data.literals || []
+
+    // Loop over NUMBER_OF_ITEMS elements and listen to each one.
+    for (let i = 0; i < NUMBER_OF_ITEMS; i++) {
+        const input = document.getElementById(`item_${i}`) as HTMLInputElement
+        input.value = literals[i] || ""
+        input.addEventListener("change", async (event) => {
+            if (event.target instanceof HTMLInputElement) {
+                literals[i] = event.target.value
+                void chrome.storage.sync.set({literals})
+                // Send message to content script in all tabs
+                const tabs = await chrome.tabs.query({})
+                for (const tab of tabs) {
+                    console.debug("OpenBlur Sending message to tab id %d, url %s", tab.id, tab.url)
+                    void chrome.tabs.sendMessage(tab.id!, {literals})
+                }
+            }
+        })
     }
 })
-
-// Loop over NUMBER_OF_ITEMS elements and listen to each one.
-for (let i = 0; i < NUMBER_OF_ITEMS; i++) {
-    const input = document.getElementById(`item_${i}`) as HTMLInputElement
-    // TODO: optimize to get all stored items at once
-    chrome.storage.sync.get(`item_${i}`, (data) => {
-        input.value = data[`item_${i}`] || ""
-    })
-    input.addEventListener("change", (event) => {
-        if (event.target instanceof HTMLInputElement) {
-            chrome.storage.sync.set({[`item_${i}`]: event.target.value}, () => {})
+checkbox.addEventListener("change", async (event) => {
+    if (event.target instanceof HTMLInputElement) {
+        const mode = event.target.checked ? MODES[1] : MODES[0]
+        void chrome.storage.sync.set({"mode": mode})
+        void chrome.action.setBadgeText({text: mode.text})
+        void chrome.action.setBadgeBackgroundColor({color: mode.color})
+        // Send message to content script in all tabs
+        const tabs = await chrome.tabs.query({})
+        for (const tab of tabs) {
+            console.debug("OpenBlur Sending message to tab id %d, url %s", tab.id, tab.url)
+            void chrome.tabs.sendMessage(tab.id!, {mode: mode})
         }
-    })
-}
+    }
+})

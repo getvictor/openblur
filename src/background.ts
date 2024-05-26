@@ -7,8 +7,8 @@ function startUp() {
         if (data.mode) {
             currentModeIndex = data.mode.index
         }
-        chrome.action.setBadgeText({text: MODES[currentModeIndex].text}).then(r => {})
-        chrome.action.setBadgeBackgroundColor({color: MODES[currentModeIndex].color}).then(r => {})
+        void chrome.action.setBadgeText({text: MODES[currentModeIndex].text})
+        void chrome.action.setBadgeBackgroundColor({color: MODES[currentModeIndex].color})
     })
 }
 
