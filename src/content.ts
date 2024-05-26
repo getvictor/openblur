@@ -1,7 +1,9 @@
 import { NUMBER_OF_ITEMS} from "./constants"
 
-let contentToBlur: string[] = []
 const blurFilter = "blur(0.343em)" // This unique filter value identifies the OpenBlur filter.
+const tagsNotToBlur = ["SCRIPT", "STYLE"]
+
+let contentToBlur: string[] = []
 let enabled = true
 
 console.debug("OpenBlur content script loaded")
@@ -13,7 +15,7 @@ function processNode(node: Node) {
     if (node.nodeType === Node.TEXT_NODE && node.textContent !== null && node.textContent.trim().length > 0) {
         const parent = node.parentElement
         if (parent !== null) {
-            if (parent.tagName === 'SCRIPT') {
+            if (tagsNotToBlur.includes(parent.tagName)) {
                 return
             } else if (parent.style.filter.includes(blurFilter)) {
                 // Already blurred
