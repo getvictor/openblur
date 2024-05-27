@@ -7,16 +7,12 @@
     "default_popup": "popup.html"
   },
   "permissions": [
-    "storage"
+    "scripting",
+    "storage",
+    "webNavigation"
   ],
+  "host_permissions": ["<all_urls>"],
   "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "all_frames": true,
-      "match_origin_as_fallback": true,
-      "css": ["content-start.css"],
-      "run_at": "document_start"
-    },
     {
       "matches": ["<all_urls>"],
       "all_frames": true,

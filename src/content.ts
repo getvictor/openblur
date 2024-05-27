@@ -1,15 +1,19 @@
 import { NUMBER_OF_ITEMS} from "./constants"
 
 const blurFilter = "blur(0.343em)" // This unique filter value identifies the OpenBlur filter.
-const tagsNotToBlur = ["SCRIPT", "STYLE"]
+const tagsNotToBlur = ["SCRIPT", "STYLE", "loc"]
 
 let contentToBlur: string[] = []
 let enabled = true
+let bodyHidden = true
 
 console.debug("OpenBlur content script loaded")
 
 function unhideBody() {
-    document.body.style.visibility = "visible"
+    if (bodyHidden) {
+        void chrome.runtime.sendMessage({action: "unhideBody"})
+        bodyHidden = false
+    }
 }
 
 function processNode(node: Node) {
@@ -18,7 +22,7 @@ function processNode(node: Node) {
     }
     if (node.nodeType === Node.TEXT_NODE && node.textContent !== null && node.textContent.trim().length > 0) {
         const parent = node.parentElement
-        if (parent !== null) {
+        if (parent !== null && parent.style) {
             if (tagsNotToBlur.includes(parent.tagName)) {
                 return
             } else if (parent.style.filter.includes(blurFilter)) {
@@ -29,16 +33,16 @@ function processNode(node: Node) {
                 }
                 return
             }
-        }
-        const text = node.textContent!
-        if (enabled) {
-            contentToBlur.some((content) => {
-                if (text.includes(content)) {
-                    blurElement(parent!)
-                    return true
-                }
-                return false
-            })
+            const text = node.textContent!
+            if (enabled) {
+                contentToBlur.some((content) => {
+                    if (text.includes(content)) {
+                        blurElement(parent!)
+                        return true
+                    }
+                    return false
+                })
+            }
         }
     }
 }
