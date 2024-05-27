@@ -28,9 +28,11 @@ chrome.webNavigation.onCommitted.addListener(
                 tabId: details.tabId,
                 frameIds: [details.frameId],
             }
-            void chrome.scripting.insertCSS({
+            chrome.scripting.insertCSS({
                 css: cssToInject,
                 target: target,
+            }).catch((error) => {
+                console.info("OpenBlur Could not inject CSS into tab %d", details.tabId, error)
             })
         }
     }
@@ -46,9 +48,11 @@ chrome.runtime.onMessage.addListener(
             if (sender.frameId !== undefined) {
                 target.frameIds = [sender.frameId]
             }
-            void chrome.scripting.removeCSS({
+            chrome.scripting.removeCSS({
                 css: cssToInject,
                 target: target,
+            }).catch((error) => {
+                console.info("OpenBlur Could not remove CSS from tab %d", target.tabId, error)
             })
         }
         if (request.mode) {

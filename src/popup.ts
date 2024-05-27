@@ -22,8 +22,14 @@ chrome.storage.sync.get(null, (data) => {
                 // Send message to content script in all tabs
                 const tabs = await chrome.tabs.query({})
                 for (const tab of tabs) {
-                    console.debug("OpenBlur Sending message to tab id %d, url %s", tab.id, tab.url)
-                    void chrome.tabs.sendMessage(tab.id!, {literals})
+                    console.debug("OpenBlur Sending literals message to tab id %d, title '%s' url %s", tab.id, tab.title, tab.url)
+                    chrome.tabs.sendMessage(tab.id!, {literals})
+                        .catch((error) => {
+                            // We ignore tabs without a proper URL, like chrome://extensions/
+                            if (tab.url) {
+                                console.info("OpenBlur Could not send message to tab with title '%s' and url %s. Was OpenBlur just installed?", tab.title, tab.url, error)
+                            }
+                        })
                 }
             }
         })
@@ -38,8 +44,14 @@ checkbox.addEventListener("change", async (event) => {
         // Send message to content script in all tabs
         const tabs = await chrome.tabs.query({})
         for (const tab of tabs) {
-            console.debug("OpenBlur Sending message to tab id %d, url %s", tab.id, tab.url)
-            void chrome.tabs.sendMessage(tab.id!, {mode: mode})
+            console.debug("OpenBlur Sending mode message to tab id %d, title '%s' url %s", tab.id, tab.title, tab.url)
+            chrome.tabs.sendMessage(tab.id!, {mode: mode})
+                .catch((error) => {
+                    // We ignore tabs without a proper URL, like chrome://extensions/
+                    if (tab.url) {
+                        console.info("OpenBlur Could not send message to tab with title '%s' and url %s. Was OpenBlur just installed?", tab.title, tab.url, error)
+                    }
+                })
         }
     }
 })
