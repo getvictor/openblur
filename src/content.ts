@@ -16,6 +16,33 @@ function unhideBody() {
     }
 }
 
+function processInputElement(input: HTMLInputElement) {
+    let text = input.value || input.getAttribute("value") || ""
+    if (input.style.filter.includes(blurFilter)) {
+        // Already blurred
+        if (!enabled) {
+            // We remove the blur filter if the extension is disabled.
+            input.style.filter = input.style.filter.replace(blurFilter, "")
+            return
+        }
+        const blurNeeded = contentToBlur.some((content) => {
+            return text.includes(content);
+        })
+        if (!blurNeeded) {
+            input.style.filter = input.style.filter.replace(blurFilter, "")
+        }
+        return
+    }
+    if (enabled && text.length > 0) {
+        const blurNeeded = contentToBlur.some((content) => {
+            return text.includes(content);
+        })
+        if (blurNeeded) {
+            blurElement(input)
+        }
+    }
+}
+
 function processNode(node: Node) {
     if (node.childNodes.length > 0) {
         Array.from(node.childNodes).forEach(processNode)
@@ -44,6 +71,15 @@ function processNode(node: Node) {
                 })
             }
         }
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const elem = node as HTMLElement
+        if (elem.tagName === "INPUT") {
+            const input = elem as HTMLInputElement
+            if (input.type === "text") {
+                processInputElement(input);
+                input.addEventListener("input", inputEventListener)
+            }
+        }
     }
 }
 
@@ -68,6 +104,12 @@ const observer = new MutationObserver((mutations) => {
     })
 })
 
+function inputEventListener(event: Event) {
+    if (event.target instanceof HTMLInputElement) {
+        processInputElement(event.target as HTMLInputElement)
+    }
+}
+
 function observe() {
     observer.observe(document, {
         attributes: false,
@@ -78,6 +120,18 @@ function observe() {
 
     // Loop through all elements on the page.
     processNode(document)
+}
+
+function disconnectInputs() {
+    let inputs = document.getElementsByTagName("INPUT")
+    for (let i = 0; i < inputs.length; i++) {
+        inputs[i].removeEventListener("input", inputEventListener)
+    }
+}
+
+function disconnect() {
+    observer.disconnect()
+    disconnectInputs()
 }
 
 function setLiterals(literals: string[]) {
@@ -109,7 +163,7 @@ chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
     if (request.mode) {
         if (request.mode.id === "off") {
             enabled = false
-            observer.disconnect()
+            disconnect()
             processNode(document)
         } else {
             enabled = true
