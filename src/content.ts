@@ -16,7 +16,7 @@ function unhideBody() {
     }
 }
 
-function processInputElement(input: HTMLInputElement) {
+function processInputElement(input: HTMLInputElement | HTMLTextAreaElement) {
     let text = input.value || input.getAttribute("value") || ""
     if (input.style.filter.includes(blurFilter)) {
         // Already blurred
@@ -79,6 +79,10 @@ function processNode(node: Node) {
                 processInputElement(input);
                 input.addEventListener("input", inputEventListener)
             }
+        } else if (elem.tagName === "TEXTAREA") {
+            const textarea = elem as HTMLTextAreaElement
+            processInputElement(textarea)
+            textarea.addEventListener("input", inputEventListener)
         }
     }
 }
@@ -105,8 +109,8 @@ const observer = new MutationObserver((mutations) => {
 })
 
 function inputEventListener(event: Event) {
-    if (event.target instanceof HTMLInputElement) {
-        processInputElement(event.target as HTMLInputElement)
+    if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        processInputElement(event.target)
     }
 }
 
