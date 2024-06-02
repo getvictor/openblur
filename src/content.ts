@@ -1,11 +1,12 @@
 import { NUMBER_OF_ITEMS} from "./constants"
 
 const blurFilter = "blur(0.343em)" // This unique filter value identifies the OpenBlur filter.
-const tagsNotToBlur = ["SCRIPT", "STYLE", "loc"]
+const tagsNotToBlur = ["HEAD", "SCRIPT", "STYLE", "loc"]
 
 let contentToBlur: string[] = []
 let enabled = true
 let bodyHidden = true
+let doFullScan = false
 
 console.debug("OpenBlur content script loaded")
 
@@ -44,31 +45,41 @@ function processInputElement(input: HTMLInputElement | HTMLTextAreaElement) {
 }
 
 function processNode(node: Node) {
+    if (node instanceof HTMLElement && tagsNotToBlur.includes(node.tagName)) {
+        return
+    }
     if (node.childNodes.length > 0) {
         Array.from(node.childNodes).forEach(processNode)
     }
     if (node.nodeType === Node.TEXT_NODE && node.textContent !== null && node.textContent.trim().length > 0) {
         const parent = node.parentElement
         if (parent !== null && parent.style) {
-            if (tagsNotToBlur.includes(parent.tagName)) {
-                return
-            } else if (parent.style.filter.includes(blurFilter)) {
+            const text = node.textContent!
+            if (parent.style.filter.includes(blurFilter)) {
                 // Already blurred
                 if (!enabled) {
                     // We remove the blur filter if the extension is disabled.
                     parent.style.filter = parent.style.filter.replace(blurFilter, "")
+                    return
+                }
+                if (doFullScan) {
+                    // Double check if the blur is still needed.
+                    const blurNeeded = contentToBlur.some((content) => {
+                        return text.includes(content);
+                    })
+                    if (!blurNeeded) {
+                        parent.style.filter = parent.style.filter.replace(blurFilter, "")
+                    }
                 }
                 return
             }
-            const text = node.textContent!
             if (enabled) {
-                contentToBlur.some((content) => {
-                    if (text.includes(content)) {
-                        blurElement(parent!)
-                        return true
-                    }
-                    return false
+                const blurNeeded = contentToBlur.some((content) => {
+                    return text.includes(content);
                 })
+                if (blurNeeded) {
+                    blurElement(parent)
+                }
             }
         }
     } else if (node.nodeType === Node.ELEMENT_NODE) {
@@ -147,7 +158,9 @@ function setLiterals(literals: string[]) {
         }
     }
     if (enabled) {
+        doFullScan = true
         observe()
+        doFullScan = false
     }
     unhideBody()
 }
