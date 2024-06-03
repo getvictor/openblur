@@ -1,4 +1,5 @@
-import { NUMBER_OF_ITEMS} from "./constants"
+import { NUMBER_OF_LITERALS} from "./constants"
+import Optimizer from "./optimizer"
 
 const blurFilter = "blur(0.343em)" // This unique filter value identifies the OpenBlur filter.
 const tagsNotToBlur = ["HEAD", "SCRIPT", "STYLE", "loc"]
@@ -7,6 +8,12 @@ let contentToBlur: string[] = []
 let enabled = true
 let bodyHidden = true
 let doFullScan = false
+
+// Performance optimization. The performance optimization mode is enabled when we blur a lot of elements in a short period of time.
+const maxBlursCount = 100
+let blursCount = maxBlursCount
+const performanceOptimizationResetMs = 5 *1000
+let performanceOptimizationMode = false
 
 console.debug("OpenBlur content script loaded")
 
@@ -18,28 +25,36 @@ function unhideBody() {
 }
 
 function processInputElement(input: HTMLInputElement | HTMLTextAreaElement) {
+    let blurTarget : HTMLElement = input
+    if (performanceOptimizationMode && input.parentElement instanceof HTMLElement) {
+        // In performance optimization mode, we may blur the parent.
+        const grandParent = input.parentElement as HTMLElement
+        if (grandParent.style && grandParent.style.filter.includes(blurFilter)) {
+            // Treat the grandparent as the parent.
+            blurTarget = grandParent
+        }
+    }
     let text = input.value || input.getAttribute("value") || ""
-    if (input.style.filter.includes(blurFilter)) {
+    if (blurTarget.style.filter.includes(blurFilter)) {
         // Already blurred
         if (!enabled) {
             // We remove the blur filter if the extension is disabled.
-            input.style.filter = input.style.filter.replace(blurFilter, "")
+            unblurElement(blurTarget)
             return
         }
         const blurNeeded = contentToBlur.some((content) => {
             return text.includes(content);
         })
         if (!blurNeeded) {
-            input.style.filter = input.style.filter.replace(blurFilter, "")
+            unblurElement(blurTarget)
         }
         return
-    }
-    if (enabled && text.length > 0) {
+    } else if (enabled && text.length > 0) {
         const blurNeeded = contentToBlur.some((content) => {
             return text.includes(content);
         })
         if (blurNeeded) {
-            blurElement(input)
+            blurElement(blurTarget)
         }
     }
 }
@@ -52,14 +67,22 @@ function processNode(node: Node) {
         Array.from(node.childNodes).forEach(processNode)
     }
     if (node.nodeType === Node.TEXT_NODE && node.textContent !== null && node.textContent.trim().length > 0) {
-        const parent = node.parentElement
+        let parent = node.parentElement
         if (parent !== null && parent.style) {
             const text = node.textContent!
+            if (performanceOptimizationMode && parent.parentElement instanceof HTMLElement) {
+                // In performance optimization mode, we may blur the parent's parent.
+                const grandParent = parent.parentElement as HTMLElement
+                if (grandParent.style && grandParent.style.filter.includes(blurFilter)) {
+                    // Treat the grandparent as the parent.
+                    parent = grandParent
+                }
+            }
             if (parent.style.filter.includes(blurFilter)) {
                 // Already blurred
                 if (!enabled) {
                     // We remove the blur filter if the extension is disabled.
-                    parent.style.filter = parent.style.filter.replace(blurFilter, "")
+                    unblurElement(parent)
                     return
                 }
                 if (doFullScan) {
@@ -68,12 +91,11 @@ function processNode(node: Node) {
                         return text.includes(content);
                     })
                     if (!blurNeeded) {
-                        parent.style.filter = parent.style.filter.replace(blurFilter, "")
+                        unblurElement(parent)
                     }
                 }
                 return
-            }
-            if (enabled) {
+            } else if (enabled) {
                 const blurNeeded = contentToBlur.some((content) => {
                     return text.includes(content);
                 })
@@ -99,14 +121,37 @@ function processNode(node: Node) {
 }
 
 function blurElement(elem: HTMLElement) {
-    if (elem.style.filter.length == 0) {
-        elem.style.filter = blurFilter
+    let blurTarget: HTMLElement = elem
+    if (performanceOptimizationMode) {
+        const ok = Optimizer.addElement(elem)
+        if (!ok) {
+            blurTarget = elem.parentElement as HTMLElement
+            void Optimizer.addElement(elem)
+        }
+    }
+    if (blurTarget.style.filter.length == 0) {
+        blurTarget.style.filter = blurFilter
     } else {
         // The element already has a filter. Append our blur filter to the existing filter.
         // We assume that the semicolon(;) is never present in the filter string. This has been the case in our limited testing.
-        elem.style.filter += ` ${blurFilter}`
+        blurTarget.style.filter += ` ${blurFilter}`
     }
     console.debug("OpenBlur blurred element id:%s, class:%s, tag:%s, text:%s", elem.id, elem.className, elem.tagName, elem.textContent)
+    blursCount--
+    if (blursCount <= 0) {
+        if (!performanceOptimizationMode) {
+            console.debug("OpenBlur performance optimization mode enabled")
+            performanceOptimizationMode = true
+        }
+    }
+}
+
+function unblurElement(elem: HTMLElement) {
+    elem.style.filter = elem.style.filter.replace(blurFilter, "")
+    if (performanceOptimizationMode) {
+        Optimizer.removeElement(elem)
+    }
+    console.debug("OpenBlur unblurred element id:%s, class:%s, tag:%s, text:%s", elem.id, elem.className, elem.tagName, elem.textContent)
 }
 
 const observer = new MutationObserver((mutations) => {
@@ -147,11 +192,15 @@ function disconnectInputs() {
 function disconnect() {
     observer.disconnect()
     disconnectInputs()
+    if (performanceOptimizationMode) {
+        Optimizer.clear()
+        performanceOptimizationMode = false
+    }
 }
 
 function setLiterals(literals: string[]) {
     contentToBlur.length = 0
-    for (let i = 0; i < NUMBER_OF_ITEMS; i++) {
+    for (let i = 0; i < NUMBER_OF_LITERALS; i++) {
         const item: string = literals[i]
         if (item && item.trim().length > 0) {
             contentToBlur.push(item.trim())
@@ -191,3 +240,7 @@ chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
         setLiterals(request.literals)
     }
 })
+
+setInterval(() => {
+    blursCount = maxBlursCount
+}, performanceOptimizationResetMs)

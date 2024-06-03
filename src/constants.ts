@@ -12,4 +12,4 @@ export const MODES = [
         color: "#008C20",
     },
 ]
-export const NUMBER_OF_ITEMS = 10
+export const NUMBER_OF_LITERALS = 10

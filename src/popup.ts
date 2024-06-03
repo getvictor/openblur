@@ -1,4 +1,4 @@
-import { MODES, NUMBER_OF_ITEMS } from "./constants"
+import { MODES, NUMBER_OF_LITERALS } from "./constants"
 
 console.debug("OpenBlur popup script loaded")
 
@@ -11,8 +11,8 @@ chrome.storage.sync.get(null, (data) => {
     void chrome.action.setBadgeBackgroundColor({color: mode.color})
     let literals: string[] = data.literals || []
 
-    // Loop over NUMBER_OF_ITEMS elements and listen to each one.
-    for (let i = 0; i < NUMBER_OF_ITEMS; i++) {
+    // Loop over NUMBER_OF_LITERALS elements and listen to each one.
+    for (let i = 0; i < NUMBER_OF_LITERALS; i++) {
         const input = document.getElementById(`item_${i}`) as HTMLInputElement
         input.value = literals[i] || ""
         input.addEventListener("change", async (event) => {
