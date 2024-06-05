@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "OpenBlur",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Hide and blur sensitive information on any webpage. Blur your secrets such as personal emails, public IP addresses, and more.",
   "action": {
     "default_popup": "popup.html"
