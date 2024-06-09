@@ -24,7 +24,7 @@ chrome.runtime.onInstalled.addListener(startUp)
 chrome.webNavigation.onCommitted.addListener(
     function(details) {
         if (MODES[currentModeIndex].id === "on") {
-            let target: chrome.scripting.InjectionTarget = {
+            const target: chrome.scripting.InjectionTarget = {
                 tabId: details.tabId,
                 frameIds: [details.frameId],
             }
@@ -40,9 +40,9 @@ chrome.webNavigation.onCommitted.addListener(
 
 // Unhide the body content.
 chrome.runtime.onMessage.addListener(
-    function(request, sender, _sendResponse) {
+    function(request, sender) {
         if (sender.tab && request.action === "unhideBody") {
-            let target: chrome.scripting.InjectionTarget = {
+            const target: chrome.scripting.InjectionTarget = {
                 tabId: sender.tab.id!,
             }
             if (sender.frameId !== undefined) {

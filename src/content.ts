@@ -4,7 +4,7 @@ import Optimizer from "./optimizer"
 const blurFilter = "blur(0.343em)" // This unique filter value identifies the OpenBlur filter.
 const tagsNotToBlur = ["HEAD", "SCRIPT", "STYLE", "loc"]
 
-let contentToBlur: string[] = []
+const contentToBlur: string[] = []
 let enabled = true
 let bodyHidden = true
 let doFullScan = false
@@ -34,7 +34,7 @@ function processInputElement(input: HTMLInputElement | HTMLTextAreaElement) {
             blurTarget = grandParent
         }
     }
-    let text = input.value || input.getAttribute("value") || ""
+    const text = input.value || input.getAttribute("value") || ""
     if (blurTarget.style.filter.includes(blurFilter)) {
         // Already blurred
         if (!enabled) {
@@ -183,7 +183,7 @@ function observe() {
 }
 
 function disconnectInputs() {
-    let inputs = document.getElementsByTagName("INPUT")
+    const inputs = document.getElementsByTagName("INPUT")
     for (let i = 0; i < inputs.length; i++) {
         inputs[i].removeEventListener("input", inputEventListener)
     }
@@ -218,12 +218,12 @@ chrome.storage.sync.get(null, (data) => {
     if (data.mode && data.mode.id === "off") {
         enabled = false
     }
-    let literals: string[] = data.literals || []
+    const literals: string[] = data.literals || []
     setLiterals(literals);
 })
 
 // Listen for messages from popup.
-chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
+chrome.runtime.onMessage.addListener((request) => {
     console.debug("OpenBlur received message from popup", request)
 
     if (request.mode) {

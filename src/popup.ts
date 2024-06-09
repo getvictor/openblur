@@ -9,7 +9,7 @@ chrome.storage.sync.get(null, (data) => {
     const mode = data.mode || MODES[1]
     void chrome.action.setBadgeText({text: mode.text})
     void chrome.action.setBadgeBackgroundColor({color: mode.color})
-    let literals: string[] = data.literals || []
+    const literals: string[] = data.literals || []
 
     // Loop over NUMBER_OF_LITERALS elements and listen to each one.
     for (let i = 0; i < NUMBER_OF_LITERALS; i++) {
