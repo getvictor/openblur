@@ -29,12 +29,12 @@ function processInputElement(input: HTMLInputElement | HTMLTextAreaElement) {
     if (performanceOptimizationMode && input.parentElement instanceof HTMLElement) {
         // In performance optimization mode, we may blur the parent.
         const grandParent = input.parentElement as HTMLElement
-        if (grandParent.style && grandParent.style.filter.includes(blurFilter)) {
+        if (grandParent.style?.filter.includes(blurFilter)) {
             // Treat the grandparent as the parent.
             blurTarget = grandParent
         }
     }
-    const text = input.value || input.getAttribute("value") || ""
+    const text = (input.value || input.getAttribute("value")) ?? ""
     if (blurTarget.style.filter.includes(blurFilter)) {
         // Already blurred
         if (!enabled) {
@@ -68,12 +68,12 @@ function processNode(node: Node) {
     }
     if (node.nodeType === Node.TEXT_NODE && node.textContent !== null && node.textContent.trim().length > 0) {
         let parent = node.parentElement
-        if (parent !== null && parent.style) {
+        if (parent?.style) {
             const text = node.textContent!
             if (performanceOptimizationMode && parent.parentElement instanceof HTMLElement) {
                 // In performance optimization mode, we may blur the parent's parent.
                 const grandParent = parent.parentElement as HTMLElement
-                if (grandParent.style && grandParent.style.filter.includes(blurFilter)) {
+                if (grandParent.style?.filter.includes(blurFilter)) {
                     // Treat the grandparent as the parent.
                     parent = grandParent
                 }
@@ -125,7 +125,7 @@ function blurElement(elem: HTMLElement) {
     if (performanceOptimizationMode) {
         const ok = Optimizer.addElement(elem)
         if (!ok) {
-            blurTarget = elem.parentElement as HTMLElement
+            blurTarget = elem.parentElement!
             void Optimizer.addElement(elem)
         }
     }
@@ -184,8 +184,8 @@ function observe() {
 
 function disconnectInputs() {
     const inputs = document.getElementsByTagName("INPUT")
-    for (let i = 0; i < inputs.length; i++) {
-        inputs[i].removeEventListener("input", inputEventListener)
+    for (const input of inputs) {
+        input.removeEventListener("input", inputEventListener)
     }
 }
 

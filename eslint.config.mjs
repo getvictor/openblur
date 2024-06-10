@@ -7,7 +7,7 @@ let config = tseslint.config(
     eslint.configs.recommended,
     ...tseslint.configs.recommended,
     // ...tseslint.configs.recommendedTypeChecked,
-    // ...tseslint.configs.stylisticTypeChecked,
+    ...tseslint.configs.stylisticTypeChecked,
     {
         ignores: ["dist/**/*"],
     },

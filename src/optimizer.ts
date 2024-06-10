@@ -3,9 +3,9 @@
 const countSlack = 5
 const recentMs = 300
 
-type BlurredItem = {
-    blurredAt: Date,
-    recentCount: number,
+interface BlurredItem {
+    blurredAt: Date;
+    recentCount: number;
 }
 
 const blurredMap = new Map<string, BlurredItem>()
