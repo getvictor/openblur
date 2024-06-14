@@ -6,11 +6,7 @@
   "action": {
     "default_popup": "popup.html"
   },
-  "permissions": [
-    "scripting",
-    "storage",
-    "webNavigation"
-  ],
+  "permissions": ["scripting", "storage", "webNavigation"],
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {
