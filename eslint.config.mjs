@@ -17,4 +17,5 @@ let config = tseslint.config(
   },
 )
 
+// noinspection JSUnusedGlobalSymbols
 export default config
