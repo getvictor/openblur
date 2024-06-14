@@ -1,4 +1,4 @@
-import { NUMBER_OF_LITERALS} from "./constants"
+import {Message, NUMBER_OF_LITERALS, StoredConfig} from "./constants"
 import Optimizer from "./optimizer"
 
 const blurFilter = "blur(0.343em)" // This unique filter value identifies the OpenBlur filter.
@@ -28,8 +28,8 @@ function processInputElement(input: HTMLInputElement | HTMLTextAreaElement) {
     let blurTarget : HTMLElement = input
     if (performanceOptimizationMode && input.parentElement instanceof HTMLElement) {
         // In performance optimization mode, we may blur the parent.
-        const grandParent = input.parentElement as HTMLElement
-        if (grandParent.style?.filter.includes(blurFilter)) {
+        const grandParent = input.parentElement
+        if (grandParent.style.filter.includes(blurFilter)) {
             // Treat the grandparent as the parent.
             blurTarget = grandParent
         }
@@ -69,11 +69,11 @@ function processNode(node: Node) {
     if (node.nodeType === Node.TEXT_NODE && node.textContent !== null && node.textContent.trim().length > 0) {
         let parent = node.parentElement
         if (parent?.style) {
-            const text = node.textContent!
+            const text = node.textContent
             if (performanceOptimizationMode && parent.parentElement instanceof HTMLElement) {
                 // In performance optimization mode, we may blur the parent's parent.
-                const grandParent = parent.parentElement as HTMLElement
-                if (grandParent.style?.filter.includes(blurFilter)) {
+                const grandParent = parent.parentElement
+                if (grandParent.style.filter.includes(blurFilter)) {
                     // Treat the grandparent as the parent.
                     parent = grandParent
                 }
@@ -124,8 +124,8 @@ function blurElement(elem: HTMLElement) {
     let blurTarget: HTMLElement = elem
     if (performanceOptimizationMode) {
         const ok = Optimizer.addElement(elem)
-        if (!ok) {
-            blurTarget = elem.parentElement!
+        if (!ok && elem.parentElement) {
+            blurTarget = elem.parentElement
             void Optimizer.addElement(elem)
         }
     }
@@ -215,19 +215,21 @@ function setLiterals(literals: string[]) {
 }
 
 chrome.storage.sync.get(null, (data) => {
-    if (data.mode && data.mode.id === "off") {
+    const config = data as StoredConfig
+    if (config.mode?.id === "off") {
         enabled = false
     }
-    const literals: string[] = data.literals || []
+    const literals: string[] = config.literals ?? []
     setLiterals(literals);
 })
 
 // Listen for messages from popup.
 chrome.runtime.onMessage.addListener((request) => {
     console.debug("OpenBlur received message from popup", request)
+    const message = request as Message
 
-    if (request.mode) {
-        if (request.mode.id === "off") {
+    if (message.mode) {
+        if (message.mode.id === "off") {
             enabled = false
             disconnect()
             processNode(document)
@@ -236,8 +238,8 @@ chrome.runtime.onMessage.addListener((request) => {
             observe()
         }
     }
-    if (request.literals) {
-        setLiterals(request.literals)
+    if (message.literals) {
+        setLiterals(message.literals)
     }
 })
 

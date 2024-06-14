@@ -1,4 +1,22 @@
-export const MODES = [
+export interface Mode {
+    index: number;
+    id: string;
+    text: string;
+    color: string;
+}
+
+export interface Message {
+    action?: string;
+    mode?: Mode;
+    literals?: string[];
+}
+
+export interface StoredConfig {
+    mode?: Mode;
+    literals?: string[];
+}
+
+export const MODES: Mode[] = [
     {
         index: 0,
         id: "off",
@@ -12,4 +30,5 @@ export const MODES = [
         color: "#008C20",
     },
 ]
+
 export const NUMBER_OF_LITERALS = 10

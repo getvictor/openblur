@@ -25,7 +25,7 @@ function getUniquePath(element: HTMLElement): string {
         if (siblings[i] instanceof HTMLElement) {
             const sibling= siblings[i] as HTMLElement
             if (sibling === element) {
-                return `${getUniquePath(element.parentElement)}/${element.tagName}[${siblingIndex}]`
+                return `${getUniquePath(element.parentElement)}/${element.tagName}[${String(siblingIndex)}]`
             }
             if (sibling.nodeType === Node.ELEMENT_NODE && sibling.tagName === element.tagName) {
                 siblingIndex++;
@@ -41,7 +41,11 @@ const Optimizer = {
         const now = new Date()
         if (blurredMap.has(path)) {
             // Element has already been blurred
-            const item = blurredMap.get(path)!
+            const item = blurredMap.get(path)
+            if (item === undefined) {
+                // This should never happen. We have already checked for the key's existence, and this extra check is for type safety.
+                return true
+            }
             const diff = now.getTime() - item.blurredAt.getTime()
             if (diff < recentMs) {
                 if (item.recentCount > countSlack) {

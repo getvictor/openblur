@@ -1,4 +1,4 @@
-import { MODES } from "./constants"
+import { Message, Mode, MODES } from "./constants"
 
 const cssToInject = "body { visibility: hidden; }"
 
@@ -8,8 +8,8 @@ console.debug("OpenBlur service worker script loaded")
 
 function startUp() {
     chrome.storage.sync.get("mode", (data) => {
-        if (data.mode) {
-            currentModeIndex = data.mode.index
+        if (data.mode && typeof data.mode === 'object') {
+            currentModeIndex = (data.mode as Mode).index
         }
         void chrome.action.setBadgeText({text: MODES[currentModeIndex].text})
         void chrome.action.setBadgeBackgroundColor({color: MODES[currentModeIndex].color})
@@ -31,7 +31,7 @@ chrome.webNavigation.onCommitted.addListener(
             chrome.scripting.insertCSS({
                 css: cssToInject,
                 target: target,
-            }).catch((error) => {
+            }).catch((error: unknown) => {
                 console.info("OpenBlur Could not inject CSS into tab %d", details.tabId, error)
             })
         }
@@ -41,22 +41,25 @@ chrome.webNavigation.onCommitted.addListener(
 // Unhide the body content.
 chrome.runtime.onMessage.addListener(
     function(request, sender) {
-        if (sender.tab && request.action === "unhideBody") {
-            const target: chrome.scripting.InjectionTarget = {
-                tabId: sender.tab.id!,
+        const message = request as Message
+        if (sender.tab && message.action === "unhideBody") {
+            if (sender.tab.id !== undefined) {
+                const target: chrome.scripting.InjectionTarget = {
+                    tabId: sender.tab.id,
+                }
+                if (sender.frameId !== undefined) {
+                    target.frameIds = [sender.frameId]
+                }
+                chrome.scripting.removeCSS({
+                    css: cssToInject,
+                    target: target,
+                }).catch((error: unknown) => {
+                    console.info("OpenBlur Could not remove CSS from tab %d", target.tabId, error)
+                })
             }
-            if (sender.frameId !== undefined) {
-                target.frameIds = [sender.frameId]
-            }
-            chrome.scripting.removeCSS({
-                css: cssToInject,
-                target: target,
-            }).catch((error) => {
-                console.info("OpenBlur Could not remove CSS from tab %d", target.tabId, error)
-            })
         }
-        if (request.mode) {
-            currentModeIndex = request.mode.index
+        if (message.mode) {
+            currentModeIndex = message.mode.index
         }
     }
 )
