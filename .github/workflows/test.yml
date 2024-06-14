@@ -33,9 +33,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install dependencies
+        run: |
+          npm install --no-save
+
       - name: Format check and lint
         run: |
-          npm install
           npm run format-check
           npm run lint
 
