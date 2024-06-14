@@ -27,8 +27,13 @@ jobs:
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        # Recommended configuration to harden the runner, created in the report after the initial run
         with:
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            registry.npmjs.org:443
 
       - name: Checkout
         uses: actions/checkout@v4
