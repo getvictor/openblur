@@ -1,8 +1,10 @@
 // @ts-check
 
+import eslint from '@eslint/js'
 import tseslint from "typescript-eslint"
 
-let config = tseslint.config(
+const config = tseslint.config(
+  eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
   {
@@ -11,7 +13,8 @@ let config = tseslint.config(
   {
     languageOptions: {
       parserOptions: {
-        project: "./tsconfig.json",
+        project: true,
+        tsconfigRootDir: import.meta.dirname,
       },
     },
   },
