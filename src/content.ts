@@ -76,6 +76,7 @@ function processNode(node: Node) {
   ) {
     let parent = node.parentElement
     if (parent?.style) {
+      let useGrandParent = false
       const text = node.textContent
       if (
         performanceOptimizationMode &&
@@ -86,6 +87,7 @@ function processNode(node: Node) {
         if (grandParent.style.filter.includes(blurFilter)) {
           // Treat the grandparent as the parent.
           parent = grandParent
+          useGrandParent = true
         }
       }
       if (parent.style.filter.includes(blurFilter)) {
@@ -95,7 +97,9 @@ function processNode(node: Node) {
           unblurElement(parent)
           return
         }
-        if (doFullScan) {
+        // In performance optimization mode, the grandparent may have been updated to have
+        // completely different content.
+        if (doFullScan || useGrandParent) {
           // Double check if the blur is still needed.
           const blurNeeded = contentToBlur.some((content) => {
             return text.includes(content)
