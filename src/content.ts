@@ -17,9 +17,10 @@ let performanceOptimizationMode = false
 
 console.debug("OpenBlur content script loaded")
 
-function unhideBody() {
-  if (bodyHidden) {
-    void chrome.runtime.sendMessage({ action: "unhideBody" })
+function unhideBody(force?: boolean) {
+  if (bodyHidden || force) {
+    const message: Message = { action: "unhideBody" }
+    void chrome.runtime.sendMessage(message)
     bodyHidden = false
   }
 }
@@ -274,8 +275,7 @@ chrome.storage.sync.get(null, (data) => {
   setLiterals(literals)
 })
 
-// Listen for messages from popup.
-chrome.runtime.onMessage.addListener((request) => {
+function handleMessage(request: unknown) {
   console.debug("OpenBlur received message from popup", request)
   const message = request as Message
 
@@ -296,8 +296,29 @@ chrome.runtime.onMessage.addListener((request) => {
   if (message.literals) {
     setLiterals(message.literals)
   }
-})
+}
+
+// Listen for messages from popup.
+chrome.runtime.onMessage.addListener(handleMessage)
 
 setInterval(() => {
   blursCount = maxBlursCount
 }, performanceOptimizationResetMs)
+
+// Page lifecycle events. Used for back/forward navigation.
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted) {
+    // The page was restored from the browser cache.
+    // We need to reconnect the extension listener.
+    chrome.runtime.onMessage.addListener(handleMessage)
+    unhideBody(true)
+  }
+})
+
+window.addEventListener("pagehide", (event) => {
+  if (event.persisted) {
+    // The page is being saved into the browser cache.
+    // We need to disconnect the extension listener.
+    chrome.runtime.onMessage.removeListener(handleMessage)
+  }
+})
