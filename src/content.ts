@@ -161,13 +161,23 @@ function blurElement(elem: HTMLElement) {
     attributes: true,
     attributeFilter: ["style"],
   })
-  console.debug(
-    "OpenBlur blurred element id:%s, class:%s, tag:%s, text:%s",
-    elem.id,
-    elem.className,
-    elem.tagName,
-    elem.textContent,
-  )
+  if (blurTarget === elem) {
+    console.debug(
+      "OpenBlur blurred element id:%s, class:%s, tag:%s, text:%s",
+      elem.id,
+      elem.className,
+      elem.tagName,
+      elem.textContent,
+    )
+  } else {
+    console.debug(
+      "OpenBlur blurred parent element id:%s, class:%s, tag:%s, elementText:%s",
+      blurTarget.id,
+      blurTarget.className,
+      blurTarget.tagName,
+      elem.textContent,
+    )
+  }
   blursCount--
   if (blursCount <= 0) {
     if (!performanceOptimizationMode) {
@@ -233,10 +243,6 @@ function disconnect() {
   observer.disconnect()
   blurStyleObserver.disconnect()
   disconnectInputs()
-  if (performanceOptimizationMode) {
-    Optimizer.clear()
-    performanceOptimizationMode = false
-  }
 }
 
 function setLiterals(literals: string[]) {
@@ -274,6 +280,10 @@ chrome.runtime.onMessage.addListener((request) => {
       enabled = false
       disconnect()
       processNode(document)
+      if (performanceOptimizationMode) {
+        Optimizer.clear()
+        performanceOptimizationMode = false
+      }
     } else {
       enabled = true
       observe()
