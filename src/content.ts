@@ -25,7 +25,10 @@ function unhideBody(force?: boolean) {
   }
 }
 
-function processInputElement(input: HTMLInputElement | HTMLTextAreaElement) {
+function processInputElement(
+  input: HTMLInputElement | HTMLTextAreaElement,
+  blurredElements: Set<HTMLElement>,
+) {
   let blurTarget: HTMLElement = input
   if (
     performanceOptimizationMode &&
@@ -37,6 +40,10 @@ function processInputElement(input: HTMLInputElement | HTMLTextAreaElement) {
       // Treat the grandparent as the parent.
       blurTarget = grandParent
     }
+  }
+  if (blurredElements.has(blurTarget)) {
+    // This element has already been blurred in this pass
+    return
   }
   const text = (input.value || input.getAttribute("value")) ?? ""
   if (blurTarget.style.filter.includes(blurFilter)) {
@@ -51,6 +58,8 @@ function processInputElement(input: HTMLInputElement | HTMLTextAreaElement) {
     })
     if (!blurNeeded) {
       unblurElement(blurTarget)
+    } else {
+      blurredElements.add(blurTarget)
     }
     return
   } else if (enabled && text.length > 0) {
@@ -58,17 +67,36 @@ function processInputElement(input: HTMLInputElement | HTMLTextAreaElement) {
       return text.includes(content)
     })
     if (blurNeeded) {
-      blurElement(blurTarget)
+      blurredElements.add(blurElement(blurTarget))
     }
   }
 }
 
-function processNode(node: Node) {
+function processNodeWithParent(node: Node) {
+  let target = node
+  if (performanceOptimizationMode && target.parentElement) {
+    // We must consider the parent/grandparent in performance optimization mode.
+    if (
+      node.nodeType === Node.TEXT_NODE &&
+      target.parentElement.parentElement
+    ) {
+      // We must consider the grandparent for text nodes.
+      target = target.parentElement.parentElement
+    } else {
+      target = target.parentElement
+    }
+  }
+  processNode(target, new Set<HTMLElement>())
+}
+
+function processNode(node: Node, blurredElements: Set<HTMLElement>) {
   if (node instanceof HTMLElement && tagsNotToBlur.includes(node.tagName)) {
     return
   }
   if (node.childNodes.length > 0) {
-    Array.from(node.childNodes).forEach(processNode)
+    Array.from(node.childNodes).forEach((value) => {
+      processNode(value, blurredElements)
+    })
   }
   if (
     node.nodeType === Node.TEXT_NODE &&
@@ -91,6 +119,10 @@ function processNode(node: Node) {
           useGrandParent = true
         }
       }
+      if (blurredElements.has(parent)) {
+        // This element has already been blurred in this pass.
+        return
+      }
       if (parent.style.filter.includes(blurFilter)) {
         // Already blurred
         if (!enabled) {
@@ -107,6 +139,8 @@ function processNode(node: Node) {
           })
           if (!blurNeeded) {
             unblurElement(parent)
+          } else {
+            blurredElements.add(parent)
           }
         }
         return
@@ -115,7 +149,7 @@ function processNode(node: Node) {
           return text.includes(content)
         })
         if (blurNeeded) {
-          blurElement(parent)
+          blurredElements.add(blurElement(parent))
         }
       }
     }
@@ -124,12 +158,12 @@ function processNode(node: Node) {
     if (elem.tagName === "INPUT") {
       const input = elem as HTMLInputElement
       if (input.type === "text") {
-        processInputElement(input)
+        processInputElement(input, blurredElements)
         input.addEventListener("input", inputEventListener)
       }
     } else if (elem.tagName === "TEXTAREA") {
       const textarea = elem as HTMLTextAreaElement
-      processInputElement(textarea)
+      processInputElement(textarea, blurredElements)
       textarea.addEventListener("input", inputEventListener)
     }
   }
@@ -140,12 +174,12 @@ function processNode(node: Node) {
 const blurStyleObserver = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
     if (mutation.type === "attributes") {
-      processNode(mutation.target)
+      processNodeWithParent(mutation.target)
     }
   })
 })
 
-function blurElement(elem: HTMLElement) {
+function blurElement(elem: HTMLElement): HTMLElement {
   let blurTarget: HTMLElement = elem
   if (performanceOptimizationMode) {
     const ok = Optimizer.addElement(elem)
@@ -190,6 +224,7 @@ function blurElement(elem: HTMLElement) {
       performanceOptimizationMode = true
     }
   }
+  return blurTarget
 }
 
 function unblurElement(elem: HTMLElement) {
@@ -209,9 +244,11 @@ function unblurElement(elem: HTMLElement) {
 const observer = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
     if (mutation.addedNodes.length > 0) {
-      mutation.addedNodes.forEach(processNode)
+      mutation.addedNodes.forEach((node) => {
+        processNodeWithParent(node)
+      })
     } else {
-      processNode(mutation.target)
+      processNodeWithParent(mutation.target)
     }
   })
 })
@@ -221,7 +258,7 @@ function inputEventListener(event: Event) {
     event.target instanceof HTMLInputElement ||
     event.target instanceof HTMLTextAreaElement
   ) {
-    processInputElement(event.target)
+    processInputElement(event.target, new Set<HTMLElement>())
   }
 }
 
@@ -234,7 +271,7 @@ function observe() {
   })
 
   // Loop through all elements on the page.
-  processNode(document)
+  processNode(document, new Set<HTMLElement>())
 }
 
 function disconnectInputs() {
@@ -283,7 +320,7 @@ function handleMessage(request: unknown) {
     if (message.mode.id === "off") {
       enabled = false
       disconnect()
-      processNode(document)
+      processNode(document, new Set<HTMLElement>())
       if (performanceOptimizationMode) {
         Optimizer.clear()
         performanceOptimizationMode = false
