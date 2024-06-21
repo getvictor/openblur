@@ -130,6 +130,16 @@ function processNode(node: Node) {
   }
 }
 
+// The blurStyleObserver is used to reapply the blur filter if it is removed.
+// The style changes should not be common.
+const blurStyleObserver = new MutationObserver((mutations) => {
+  mutations.forEach((mutation) => {
+    if (mutation.type === "attributes") {
+      processNode(mutation.target)
+    }
+  })
+})
+
 function blurElement(elem: HTMLElement) {
   let blurTarget: HTMLElement = elem
   if (performanceOptimizationMode) {
@@ -146,6 +156,11 @@ function blurElement(elem: HTMLElement) {
     // We assume that the semicolon(;) is never present in the filter string. This has been the case in our limited testing.
     blurTarget.style.filter += ` ${blurFilter}`
   }
+  // Note: observing the same element multiple times is a no-op.
+  blurStyleObserver.observe(elem, {
+    attributes: true,
+    attributeFilter: ["style"],
+  })
   console.debug(
     "OpenBlur blurred element id:%s, class:%s, tag:%s, text:%s",
     elem.id,
@@ -216,6 +231,7 @@ function disconnectInputs() {
 
 function disconnect() {
   observer.disconnect()
+  blurStyleObserver.disconnect()
   disconnectInputs()
   if (performanceOptimizationMode) {
     Optimizer.clear()
