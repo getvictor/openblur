@@ -89,82 +89,110 @@ function processNodeWithParent(node: Node) {
   processNode(target, new Set<HTMLElement>())
 }
 
+function processHtmlElement(
+  parent: HTMLElement | null,
+  text: string,
+  blurredElements: Set<HTMLElement>,
+  checkContent: boolean,
+) {
+  if (parent?.style) {
+    let useGrandParent = false
+    if (
+      performanceOptimizationMode &&
+      parent.parentElement instanceof HTMLElement
+    ) {
+      // In performance optimization mode, we may blur the parent's parent.
+      const grandParent = parent.parentElement
+      if (grandParent.style.filter.includes(blurFilter)) {
+        // Treat the grandparent as the parent.
+        parent = grandParent
+        useGrandParent = true
+      }
+    }
+    if (blurredElements.has(parent)) {
+      // This element has already been blurred in this pass.
+      return
+    }
+    if (parent.style.filter.includes(blurFilter)) {
+      // Already blurred
+      if (!enabled) {
+        // We remove the blur filter if the extension is disabled.
+        unblurElement(parent)
+        return
+      }
+      // In performance optimization mode, the grandparent may have been updated to have
+      // completely different content.
+      if (checkContent || useGrandParent) {
+        // Double check if the blur is still needed.
+        const blurNeeded = contentToBlur.some((content) => {
+          return text.includes(content)
+        })
+        if (!blurNeeded) {
+          unblurElement(parent)
+        } else {
+          blurredElements.add(parent)
+        }
+      }
+      return
+    } else if (enabled) {
+      const blurNeeded = contentToBlur.some((content) => {
+        return text.includes(content)
+      })
+      if (blurNeeded) {
+        blurredElements.add(blurElement(parent))
+      }
+    }
+  }
+}
+
 function processNode(node: Node, blurredElements: Set<HTMLElement>) {
   if (node instanceof HTMLElement && tagsNotToBlur.includes(node.tagName)) {
     return
-  }
-  if (node.childNodes.length > 0) {
-    Array.from(node.childNodes).forEach((value) => {
-      processNode(value, blurredElements)
-    })
   }
   if (
     node.nodeType === Node.TEXT_NODE &&
     node.textContent !== null &&
     node.textContent.trim().length > 0
   ) {
-    let parent = node.parentElement
-    if (parent?.style) {
-      let useGrandParent = false
-      const text = node.textContent
-      if (
-        performanceOptimizationMode &&
-        parent.parentElement instanceof HTMLElement
-      ) {
-        // In performance optimization mode, we may blur the parent's parent.
-        const grandParent = parent.parentElement
-        if (grandParent.style.filter.includes(blurFilter)) {
-          // Treat the grandparent as the parent.
-          parent = grandParent
-          useGrandParent = true
+    const text = node.textContent
+    processHtmlElement(node.parentElement, text, blurredElements, doFullScan)
+  } else if (node.nodeType === Node.ELEMENT_NODE) {
+    const elem = node as HTMLElement
+    switch (elem.tagName) {
+      case "INPUT": {
+        const input = elem as HTMLInputElement
+        if (input.type === "text") {
+          processInputElement(input, blurredElements)
+          input.addEventListener("input", inputEventListener)
         }
+        break
       }
-      if (blurredElements.has(parent)) {
-        // This element has already been blurred in this pass.
-        return
+      case "TEXTAREA": {
+        const textarea = elem as HTMLTextAreaElement
+        processInputElement(textarea, blurredElements)
+        textarea.addEventListener("input", inputEventListener)
+        break
       }
-      if (parent.style.filter.includes(blurFilter)) {
-        // Already blurred
-        if (!enabled) {
-          // We remove the blur filter if the extension is disabled.
-          unblurElement(parent)
-          return
-        }
-        // In performance optimization mode, the grandparent may have been updated to have
-        // completely different content.
-        if (doFullScan || useGrandParent) {
-          // Double check if the blur is still needed.
-          const blurNeeded = contentToBlur.some((content) => {
-            return text.includes(content)
+      case "SELECT": {
+        const select = elem as HTMLSelectElement
+        const text = select.options[select.selectedIndex].text
+        processHtmlElement(select, text, blurredElements, true)
+        select.addEventListener("change", selectOnChangeListener)
+        break
+      }
+      default: {
+        if (node.childNodes.length > 0) {
+          Array.from(node.childNodes).forEach((value) => {
+            processNode(value, blurredElements)
           })
-          if (!blurNeeded) {
-            unblurElement(parent)
-          } else {
-            blurredElements.add(parent)
-          }
-        }
-        return
-      } else if (enabled) {
-        const blurNeeded = contentToBlur.some((content) => {
-          return text.includes(content)
-        })
-        if (blurNeeded) {
-          blurredElements.add(blurElement(parent))
         }
       }
     }
-  } else if (node.nodeType === Node.ELEMENT_NODE) {
-    const elem = node as HTMLElement
-    if (elem.tagName === "INPUT") {
-      const input = elem as HTMLInputElement
-      if (input.type === "text") {
-        processInputElement(input, blurredElements)
-        input.addEventListener("input", inputEventListener)
-      }
-    } else if (elem.tagName === "TEXTAREA") {
-      const textarea = elem as HTMLTextAreaElement
-      processInputElement(textarea, blurredElements)
-      textarea.addEventListener("input", inputEventListener)
+  } else {
+    if (node.childNodes.length > 0) {
+      Array.from(node.childNodes).forEach((value) => {
+        processNode(value, blurredElements)
+      })
     }
   }
 }
@@ -259,6 +287,14 @@ function inputEventListener(event: Event) {
     event.target instanceof HTMLTextAreaElement
   ) {
     processInputElement(event.target, new Set<HTMLElement>())
+  }
+}
+
+function selectOnChangeListener(event: Event) {
+  if (event.target instanceof HTMLSelectElement) {
+    const select = event.target
+    const text = select.options[select.selectedIndex].text
+    processHtmlElement(select, text, new Set<HTMLElement>(), true)
   }
 }
 
