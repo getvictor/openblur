@@ -1,13 +1,18 @@
 import { Message, NUMBER_OF_LITERALS, StoredConfig } from "./constants"
 import Optimizer from "./optimizer"
 
-const blurFilter = "blur(0.343em)" // This unique filter value identifies the OpenBlur filter.
+// These unique filter values identify the OpenBlur filter.
+const blurFilter = "blur(0.343em)"
+const blurSelectorFilter = "blur(0.344em)"
 const tagsNotToBlur = ["HEAD", "SCRIPT", "STYLE", "loc"]
 
 const contentToBlur: string[] = []
 let enabled = true
 let bodyHidden = true
 let doFullScan = false
+const localConfig: StoredConfig = {
+  cssSelectors: [],
+}
 
 // Performance optimization. The performance optimization mode is enabled when we blur a lot of elements in a short period of time.
 const maxBlursCount = 100
@@ -273,8 +278,10 @@ function unblurElement(elem: HTMLElement) {
 }
 
 const observer = new MutationObserver((mutations) => {
+  let addedNodesFound = false
   mutations.forEach((mutation) => {
     if (mutation.addedNodes.length > 0) {
+      addedNodesFound = true
       mutation.addedNodes.forEach((node) => {
         processNodeWithParent(node)
       })
@@ -282,6 +289,10 @@ const observer = new MutationObserver((mutations) => {
       processNodeWithParent(mutation.target)
     }
   })
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (addedNodesFound) {
+    setCssSelectors(localConfig.cssSelectors ?? [])
+  }
 })
 
 function inputEventListener(event: Event) {
@@ -345,6 +356,71 @@ function setLiterals(literals: string[]) {
   unhideBody()
 }
 
+function setCssSelectors(selectors: string[], unblur?: boolean) {
+  const currentSelectors = localConfig.cssSelectors ?? []
+  // Determine if there is a change
+  let selectorsChanged = true
+  if (
+    currentSelectors.length === selectors.length &&
+    currentSelectors.every((value, index) => {
+      return value === selectors[index]
+    })
+  ) {
+    selectorsChanged = false
+  }
+  if (selectorsChanged || unblur) {
+    // Unblur the current/old elements.
+    for (const selector of currentSelectors) {
+      if (selector && selector.trim().length > 0) {
+        const elements = document.querySelectorAll(selector)
+        elements.forEach((element) => {
+          if (element.nodeType === Node.ELEMENT_NODE) {
+            const elem = element as HTMLElement
+            elem.style.filter = elem.style.filter.replace(
+              blurSelectorFilter,
+              "",
+            )
+          }
+        })
+      }
+    }
+  }
+  if (enabled) {
+    // Now, blur the new elements.
+    for (const selector of selectors) {
+      if (selector && selector.trim().length > 0) {
+        let count = 0
+        const elements = document.querySelectorAll(selector)
+        elements.forEach((element) => {
+          if (element.nodeType === Node.ELEMENT_NODE) {
+            const elem = element as HTMLElement
+            if (!elem.style.filter.includes(blurSelectorFilter)) {
+              if (elem.style.filter.length == 0) {
+                elem.style.filter = blurSelectorFilter
+                count++
+              } else {
+                // The element already has a filter. Append our blur filter to the existing filter.
+                elem.style.filter += ` ${blurSelectorFilter}`
+                count++
+              }
+            }
+          }
+        })
+        if (count > 0) {
+          console.debug(
+            "OpenBlur blurred %d elements with selector %s",
+            count,
+            selector,
+          )
+        }
+      }
+    }
+  }
+  if (selectorsChanged) {
+    localConfig.cssSelectors = selectors
+  }
+}
+
 chrome.storage.sync.get(null, (data) => {
   const config = data as StoredConfig
   if (config.mode?.id === "off") {
@@ -352,6 +428,9 @@ chrome.storage.sync.get(null, (data) => {
   }
   const literals: string[] = config.literals ?? []
   setLiterals(literals)
+  if (config.cssSelectors && config.cssSelectors.length > 0) {
+    setCssSelectors(config.cssSelectors)
+  }
 })
 
 function handleMessage(request: unknown) {
@@ -367,13 +446,18 @@ function handleMessage(request: unknown) {
         Optimizer.clear()
         performanceOptimizationMode = false
       }
+      setCssSelectors(localConfig.cssSelectors ?? [], true) // clear selector blurs
     } else {
       enabled = true
       observe()
+      setCssSelectors(localConfig.cssSelectors ?? [])
     }
   }
   if (message.literals) {
     setLiterals(message.literals)
+  }
+  if (message.cssSelectors) {
+    setCssSelectors(message.cssSelectors)
   }
 }
 

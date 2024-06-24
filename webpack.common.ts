@@ -6,6 +6,7 @@ const config: Configuration = {
   entry: {
     background: "./src/background.ts",
     content: "./src/content.ts",
+    options: "./src/options.ts",
     popup: "./src/popup.ts",
   },
   resolve: {

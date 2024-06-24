@@ -9,11 +9,13 @@ export interface Message {
   action?: string
   mode?: Mode
   literals?: string[]
+  cssSelectors?: string[]
 }
 
 export interface StoredConfig {
   mode?: Mode
   literals?: string[]
+  cssSelectors?: string[]
 }
 
 export const MODES: Mode[] = [
@@ -32,3 +34,4 @@ export const MODES: Mode[] = [
 ]
 
 export const NUMBER_OF_LITERALS = 10
+export const NUMBER_OF_CSS_SELECTORS = 5
