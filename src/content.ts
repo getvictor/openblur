@@ -175,7 +175,10 @@ function processNode(node: Node, blurredElements: Set<HTMLElement>) {
       }
       case "SELECT": {
         const select = elem as HTMLSelectElement
-        const text = select.options[select.selectedIndex].text
+        let text = ""
+        if (select.selectedIndex >= 0) {
+          text = select.options[select.selectedIndex].text
+        }
         processHtmlElement(select, text, blurredElements, true)
         select.addEventListener("change", selectOnChangeListener)
         break
@@ -293,7 +296,10 @@ function inputEventListener(event: Event) {
 function selectOnChangeListener(event: Event) {
   if (event.target instanceof HTMLSelectElement) {
     const select = event.target
-    const text = select.options[select.selectedIndex].text
+    let text = ""
+    if (select.selectedIndex >= 0) {
+      text = select.options[select.selectedIndex].text
+    }
     processHtmlElement(select, text, new Set<HTMLElement>(), true)
   }
 }
