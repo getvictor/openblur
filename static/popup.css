@@ -57,3 +57,14 @@ input:checked + .slider:before {
 .secret {
   margin: 5px;
 }
+
+.button-link {
+  margin: 10px;
+  background: none !important;
+  border: none;
+  padding: 0 !important;
+  font-family: arial, sans-serif;
+  color: #069;
+  text-decoration: underline;
+  cursor: pointer;
+}
