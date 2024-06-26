@@ -20,11 +20,8 @@ This project is under active development. Pull requests and issues are welcome.
 
 [![Install OpenBlur Chrome extension](http://img.youtube.com/vi/0uQiV4Bxc5I/0.jpg)](http://www.youtube.com/watch?v=0uQiV4Bxc5I)
 
-## Building the extension for release and distribution
+## Building the extension from source
 
-- Run `npm version X.X.X --no-git-tag-version` to update the version in `package.json` and `package-lock.json`
-- Update `static/manifest.json` with the new version number
-- `rm -rf dist`
-- Run `npm run build` to generate the new `dist` folder
-- `cd dist && zip -vr openblur.zip . -x "*.DS_Store"`
-- Upload `openblur.zip` to the Chrome Web Store Developer Dashboard and the new GitHub release
+- `npm install`
+- `npm run build`
+- Load the `dist` folder as an unpacked extension in Chrome
