@@ -20,6 +20,9 @@ let blursCount = maxBlursCount
 const performanceOptimizationResetMs = 5 * 1000
 let performanceOptimizationMode = false
 
+// For debug
+const performanceLogging = false
+
 console.debug("OpenBlur content script loaded")
 
 function unhideBody(force?: boolean) {
@@ -278,20 +281,39 @@ function unblurElement(elem: HTMLElement) {
 }
 
 const observer = new MutationObserver((mutations) => {
+  const startTime = performance.now()
   let addedNodesFound = false
-  mutations.forEach((mutation) => {
-    if (mutation.addedNodes.length > 0) {
-      addedNodesFound = true
-      mutation.addedNodes.forEach((node) => {
-        processNodeWithParent(node)
-      })
-    } else {
-      processNodeWithParent(mutation.target)
-    }
-  })
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  // Performance optimization: for a lot of mutations, we do a full scan instead.
+  if (mutations.length > 50) {
+    processNode(document, new Set<HTMLElement>())
+    addedNodesFound = mutations.some((mutation) => {
+      return mutation.addedNodes.length > 0
+    })
+  } else {
+    mutations.forEach((mutation) => {
+      if (mutation.addedNodes.length > 0) {
+        addedNodesFound = true
+        mutation.addedNodes.forEach((node) => {
+          processNodeWithParent(node)
+        })
+      } else {
+        processNodeWithParent(mutation.target)
+      }
+    })
+  }
   if (addedNodesFound) {
     setCssSelectors(localConfig.cssSelectors ?? [])
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (performanceLogging) {
+    const duration = performance.now() - startTime
+    if (duration > 2) {
+      console.log(
+        "OpenBlur MutationObserver took %f ms for mutations",
+        duration,
+        mutations,
+      )
+    }
   }
 })
 
