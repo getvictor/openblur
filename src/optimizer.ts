@@ -27,10 +27,7 @@ function getUniquePath(element: HTMLElement): string {
       if (sibling === element) {
         return `${getUniquePath(element.parentElement)}/${element.tagName}[${String(siblingIndex)}]`
       }
-      if (
-        sibling.nodeType === Node.ELEMENT_NODE &&
-        sibling.tagName === element.tagName
-      ) {
+      if (sibling.nodeType === Node.ELEMENT_NODE && sibling.tagName === element.tagName) {
         siblingIndex++
       }
     }

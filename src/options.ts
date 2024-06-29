@@ -6,9 +6,7 @@ chrome.storage.sync.get(null, (data) => {
 
   // Loop over NUMBER_OF_CSS_SELECTORS elements and listen to each one.
   for (let i = 0; i < NUMBER_OF_CSS_SELECTORS; i++) {
-    const input = document.getElementById(
-      `css_selector_${String(i)}`,
-    ) as HTMLInputElement
+    const input = document.getElementById(`css_selector_${String(i)}`) as HTMLInputElement
     input.value = cssSelectors[i] || ""
     input.addEventListener("change", (event) => {
       if (event.target instanceof HTMLInputElement) {
@@ -26,19 +24,17 @@ chrome.storage.sync.get(null, (data) => {
                 tab.url,
               )
               if (tab.id !== undefined) {
-                chrome.tabs
-                  .sendMessage(tab.id, { cssSelectors })
-                  .catch((error: unknown) => {
-                    // We ignore tabs without a proper URL, like chrome://extensions/
-                    if (tab.url) {
-                      console.info(
-                        "OpenBlur Could not send message to tab with title '%s' and url %s. Was OpenBlur just installed?",
-                        tab.title,
-                        tab.url,
-                        error,
-                      )
-                    }
-                  })
+                chrome.tabs.sendMessage(tab.id, { cssSelectors }).catch((error: unknown) => {
+                  // We ignore tabs without a proper URL, like chrome://extensions/
+                  if (tab.url) {
+                    console.info(
+                      "OpenBlur Could not send message to tab with title '%s' and url %s. Was OpenBlur just installed?",
+                      tab.title,
+                      tab.url,
+                      error,
+                    )
+                  }
+                })
               }
             }
           })

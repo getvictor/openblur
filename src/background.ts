@@ -35,11 +35,7 @@ chrome.webNavigation.onCommitted.addListener(function (details) {
         target: target,
       })
       .catch((error: unknown) => {
-        console.info(
-          "OpenBlur Could not inject CSS into tab %d",
-          details.tabId,
-          error,
-        )
+        console.info("OpenBlur Could not inject CSS into tab %d", details.tabId, error)
       })
   }
 })
@@ -61,11 +57,7 @@ chrome.runtime.onMessage.addListener(function (request, sender) {
           target: target,
         })
         .catch((error: unknown) => {
-          console.info(
-            "OpenBlur Could not remove CSS from tab %d",
-            target.tabId,
-            error,
-          )
+          console.info("OpenBlur Could not remove CSS from tab %d", target.tabId, error)
         })
     }
   }

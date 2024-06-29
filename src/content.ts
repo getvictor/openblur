@@ -33,15 +33,9 @@ function unhideBody(force?: boolean) {
   }
 }
 
-function processInputElement(
-  input: HTMLInputElement | HTMLTextAreaElement,
-  blurredElements: Set<HTMLElement>,
-) {
+function processInputElement(input: HTMLInputElement | HTMLTextAreaElement, blurredElements: Set<HTMLElement>) {
   let blurTarget: HTMLElement = input
-  if (
-    performanceOptimizationMode &&
-    input.parentElement instanceof HTMLElement
-  ) {
+  if (performanceOptimizationMode && input.parentElement instanceof HTMLElement) {
     // In performance optimization mode, we may blur the parent.
     const grandParent = input.parentElement
     if (grandParent.style.filter.includes(blurFilter)) {
@@ -84,10 +78,7 @@ function processNodeWithParent(node: Node) {
   let target = node
   if (performanceOptimizationMode && target.parentElement) {
     // We must consider the parent/grandparent in performance optimization mode.
-    if (
-      node.nodeType === Node.TEXT_NODE &&
-      target.parentElement.parentElement
-    ) {
+    if (node.nodeType === Node.TEXT_NODE && target.parentElement.parentElement) {
       // We must consider the grandparent for text nodes.
       target = target.parentElement.parentElement
     } else {
@@ -105,10 +96,7 @@ function processHtmlElement(
 ) {
   if (parent?.style) {
     let useGrandParent = false
-    if (
-      performanceOptimizationMode &&
-      parent.parentElement instanceof HTMLElement
-    ) {
+    if (performanceOptimizationMode && parent.parentElement instanceof HTMLElement) {
       // In performance optimization mode, we may blur the parent's parent.
       const grandParent = parent.parentElement
       if (grandParent.style.filter.includes(blurFilter)) {
@@ -157,11 +145,7 @@ function processNode(node: Node, blurredElements: Set<HTMLElement>) {
   if (node instanceof HTMLElement && tagsNotToBlur.includes(node.tagName)) {
     return
   }
-  if (
-    node.nodeType === Node.TEXT_NODE &&
-    node.textContent !== null &&
-    node.textContent.trim().length > 0
-  ) {
+  if (node.nodeType === Node.TEXT_NODE && node.textContent !== null && node.textContent.trim().length > 0) {
     const text = node.textContent
     processHtmlElement(node.parentElement, text, blurredElements, doFullScan)
   } else if (node.nodeType === Node.ELEMENT_NODE) {
@@ -308,20 +292,13 @@ const observer = new MutationObserver((mutations) => {
   if (performanceLogging) {
     const duration = performance.now() - startTime
     if (duration > 2) {
-      console.log(
-        "OpenBlur MutationObserver took %f ms for mutations",
-        duration,
-        mutations,
-      )
+      console.log("OpenBlur MutationObserver took %f ms for mutations", duration, mutations)
     }
   }
 })
 
 function inputEventListener(event: Event) {
-  if (
-    event.target instanceof HTMLInputElement ||
-    event.target instanceof HTMLTextAreaElement
-  ) {
+  if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
     processInputElement(event.target, new Set<HTMLElement>())
   }
 }
@@ -399,10 +376,7 @@ function setCssSelectors(selectors: string[], unblur?: boolean) {
           elements.forEach((element) => {
             if (element.nodeType === Node.ELEMENT_NODE) {
               const elem = element as HTMLElement
-              elem.style.filter = elem.style.filter.replace(
-                blurSelectorFilter,
-                "",
-              )
+              elem.style.filter = elem.style.filter.replace(blurSelectorFilter, "")
             }
           })
         } catch (error: unknown) {
@@ -437,11 +411,7 @@ function setCssSelectors(selectors: string[], unblur?: boolean) {
           console.info("OpenBlur could not query CSS selector:", selector)
         }
         if (count > 0) {
-          console.debug(
-            "OpenBlur blurred %d elements with selector %s",
-            count,
-            selector,
-          )
+          console.debug("OpenBlur blurred %d elements with selector %s", count, selector)
         }
       }
     }
