@@ -372,16 +372,20 @@ function setCssSelectors(selectors: string[], unblur?: boolean) {
     // Unblur the current/old elements.
     for (const selector of currentSelectors) {
       if (selector && selector.trim().length > 0) {
-        const elements = document.querySelectorAll(selector)
-        elements.forEach((element) => {
-          if (element.nodeType === Node.ELEMENT_NODE) {
-            const elem = element as HTMLElement
-            elem.style.filter = elem.style.filter.replace(
-              blurSelectorFilter,
-              "",
-            )
-          }
-        })
+        try {
+          const elements = document.querySelectorAll(selector)
+          elements.forEach((element) => {
+            if (element.nodeType === Node.ELEMENT_NODE) {
+              const elem = element as HTMLElement
+              elem.style.filter = elem.style.filter.replace(
+                blurSelectorFilter,
+                "",
+              )
+            }
+          })
+        } catch (error: unknown) {
+          console.info("OpenBlur could not query CSS selector:", selector)
+        }
       }
     }
   }
@@ -390,22 +394,26 @@ function setCssSelectors(selectors: string[], unblur?: boolean) {
     for (const selector of selectors) {
       if (selector && selector.trim().length > 0) {
         let count = 0
-        const elements = document.querySelectorAll(selector)
-        elements.forEach((element) => {
-          if (element.nodeType === Node.ELEMENT_NODE) {
-            const elem = element as HTMLElement
-            if (!elem.style.filter.includes(blurSelectorFilter)) {
-              if (elem.style.filter.length == 0) {
-                elem.style.filter = blurSelectorFilter
-                count++
-              } else {
-                // The element already has a filter. Append our blur filter to the existing filter.
-                elem.style.filter += ` ${blurSelectorFilter}`
-                count++
+        try {
+          const elements = document.querySelectorAll(selector)
+          elements.forEach((element) => {
+            if (element.nodeType === Node.ELEMENT_NODE) {
+              const elem = element as HTMLElement
+              if (!elem.style.filter.includes(blurSelectorFilter)) {
+                if (elem.style.filter.length == 0) {
+                  elem.style.filter = blurSelectorFilter
+                  count++
+                } else {
+                  // The element already has a filter. Append our blur filter to the existing filter.
+                  elem.style.filter += ` ${blurSelectorFilter}`
+                  count++
+                }
               }
             }
-          }
-        })
+          })
+        } catch (error: unknown) {
+          console.info("OpenBlur could not query CSS selector:", selector)
+        }
         if (count > 0) {
           console.debug(
             "OpenBlur blurred %d elements with selector %s",
