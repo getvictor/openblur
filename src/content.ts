@@ -268,7 +268,8 @@ const observer = new MutationObserver((mutations) => {
   const startTime = performance.now()
   let addedNodesFound = false
   // Performance optimization: for a lot of mutations, we do a full scan instead.
-  if (mutations.length > 50) {
+  const mutationsTriggerFullScan = 50
+  if (mutations.length >= mutationsTriggerFullScan) {
     processNode(document, new Set<HTMLElement>())
     addedNodesFound = mutations.some((mutation) => {
       return mutation.addedNodes.length > 0
@@ -292,7 +293,11 @@ const observer = new MutationObserver((mutations) => {
   if (performanceLogging) {
     const duration = performance.now() - startTime
     if (duration > 2) {
-      console.log("OpenBlur MutationObserver took %f ms for mutations", duration, mutations)
+      if (mutations.length >= mutationsTriggerFullScan) {
+        console.log("OpenBlur MutationObserver took %f ms for full scan", duration)
+      } else {
+        console.log("OpenBlur MutationObserver took %f ms for mutations", duration, mutations)
+      }
     }
   }
 })
