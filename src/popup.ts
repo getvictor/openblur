@@ -8,7 +8,7 @@ chrome.storage.sync.get(null, (data) => {
   const config = data as StoredConfig
   checkbox.checked = !(config.mode?.id === "off")
   const mode = config.mode ?? MODES[1]
-  void chrome.action.setIcon({ path: mode.icon })
+  void chrome.action.setIcon({ path: MODES[mode.index].icon })
   const literals: string[] = config.literals ?? []
 
   // Loop over NUMBER_OF_LITERALS elements and listen to each one.
