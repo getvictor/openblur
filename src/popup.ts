@@ -8,8 +8,7 @@ chrome.storage.sync.get(null, (data) => {
   const config = data as StoredConfig
   checkbox.checked = !(config.mode?.id === "off")
   const mode = config.mode ?? MODES[1]
-  void chrome.action.setBadgeText({ text: mode.text })
-  void chrome.action.setBadgeBackgroundColor({ color: mode.color })
+  void chrome.action.setIcon({ path: mode.icon })
   const literals: string[] = config.literals ?? []
 
   // Loop over NUMBER_OF_LITERALS elements and listen to each one.
@@ -57,8 +56,7 @@ checkbox.addEventListener("change", (event) => {
   if (event.target instanceof HTMLInputElement) {
     const mode = event.target.checked ? MODES[1] : MODES[0]
     void chrome.storage.sync.set({ mode: mode })
-    void chrome.action.setBadgeText({ text: mode.text })
-    void chrome.action.setBadgeBackgroundColor({ color: mode.color })
+    void chrome.action.setIcon({ path: mode.icon })
     // Send message to content script in all tabs
     chrome.tabs
       .query({})

@@ -3,6 +3,10 @@
   "name": "OpenBlur",
   "version": "0.5.0",
   "description": "Hide and blur sensitive information on any webpage. Blur your secrets such as personal emails, public IP addresses, and more.",
+  "icons": {
+    "48": "blurry_purple_48.png",
+    "128": "blurry_purple_128.png"
+  },
   "action": {
     "default_popup": "popup.html"
   },

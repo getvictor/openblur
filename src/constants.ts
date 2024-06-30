@@ -3,6 +3,7 @@ export interface Mode {
   id: string
   text: string
   color: string
+  icon: string
 }
 
 export interface Message {
@@ -24,12 +25,14 @@ export const MODES: Mode[] = [
     id: "off",
     text: "off",
     color: "#AAAAAA",
+    icon: "blurry_gray_16.png",
   },
   {
     index: 1,
     id: "on",
     text: "blur",
     color: "#008C20",
+    icon: "blurry_green_16.png",
   },
 ]
 

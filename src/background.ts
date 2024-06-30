@@ -11,10 +11,7 @@ function startUp() {
     if (data.mode && typeof data.mode === "object") {
       currentModeIndex = (data.mode as Mode).index
     }
-    void chrome.action.setBadgeText({ text: MODES[currentModeIndex].text })
-    void chrome.action.setBadgeBackgroundColor({
-      color: MODES[currentModeIndex].color,
-    })
+    void chrome.action.setIcon({ path: MODES[currentModeIndex].icon })
   })
 }
 
