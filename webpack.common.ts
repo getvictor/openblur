@@ -1,5 +1,5 @@
 import path from "path"
-import { Configuration } from "webpack"
+import type { Configuration } from "webpack"
 import CopyWebpackPlugin from "copy-webpack-plugin"
 
 const config: Configuration = {
