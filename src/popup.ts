@@ -1,4 +1,5 @@
 import { MODES, NUMBER_OF_LITERALS, StoredConfig } from "./constants"
+import "./popup.css"
 
 console.debug("OpenBlur popup script loaded")
 

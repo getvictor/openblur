@@ -10,7 +10,7 @@ const config: Configuration = {
     popup: "./src/popup.ts",
   },
   resolve: {
-    extensions: [".ts"],
+    extensions: [".ts", ".css"],
   },
   module: {
     rules: [
@@ -18,6 +18,21 @@ const config: Configuration = {
         test: /\.ts$/,
         loader: "ts-loader",
         exclude: /node_modules/,
+      },
+      {
+        test: /\.css$/,
+        use: [
+          "style-loader",
+          "css-loader",
+          {
+            loader: "postcss-loader",
+            options: {
+              postcssOptions: {
+                plugins: ["tailwindcss"],
+              },
+            },
+          },
+        ],
       },
     ],
   },
