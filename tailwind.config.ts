@@ -2,7 +2,7 @@ import type { Config } from "tailwindcss"
 
 // noinspection JSUnusedGlobalSymbols
 export default {
-  content: ["./static/popup.html"],
+  content: ["./static/*.html"],
   theme: {
     extend: {},
   },

@@ -1,41 +1,38 @@
 <html lang="en">
   <head>
     <title>OpenBlur popup</title>
-    <link rel="stylesheet" type="text/css" href="popup.css" />
   </head>
   <body>
-    <label class="w-full inline-flex items-center justify-center cursor-pointer">
-      <input id="enabled" type="checkbox" class="sr-only peer" />
-      <span class="ob-enable"></span>
+    <label class="ob-center cursor-pointer">
+      <input id="enabled" type="checkbox" class="ob-enable-input peer" />
+      <span
+        class="ob-enable-span peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white peer-checked:bg-blue-600"
+      ></span>
     </label>
 
     <label for="item_0" class="invisible"></label>
-    <input id="item_0" class="ob-secret" type="password" placeholder="secret" />
+    <input id="item_0" class="ob-input w-52" type="password" placeholder="secret" />
     <label for="item_1" class="invisible"></label>
-    <input id="item_1" class="ob-secret" type="password" placeholder="secret" />
+    <input id="item_1" class="ob-input w-52" type="password" placeholder="secret" />
     <label for="item_2" class="invisible"></label>
-    <input id="item_2" class="ob-secret" type="password" placeholder="secret" />
+    <input id="item_2" class="ob-input w-52" type="password" placeholder="secret" />
     <label for="item_3" class="invisible"></label>
-    <input id="item_3" class="ob-secret" type="password" placeholder="secret" />
+    <input id="item_3" class="ob-input w-52" type="password" placeholder="secret" />
     <label for="item_4" class="invisible"></label>
-    <input id="item_4" class="ob-secret" type="password" placeholder="secret" />
+    <input id="item_4" class="ob-input w-52" type="password" placeholder="secret" />
     <label for="item_5" class="invisible"></label>
-    <input id="item_5" class="ob-secret" type="password" placeholder="secret" />
+    <input id="item_5" class="ob-input w-52" type="password" placeholder="secret" />
     <label for="item_6" class="invisible"></label>
-    <input id="item_6" class="ob-secret" type="password" placeholder="secret" />
+    <input id="item_6" class="ob-input w-52" type="password" placeholder="secret" />
     <label for="item_7" class="invisible"></label>
-    <input id="item_7" class="ob-secret" type="password" placeholder="secret" />
+    <input id="item_7" class="ob-input w-52" type="password" placeholder="secret" />
     <label for="item_8" class="invisible"></label>
-    <input id="item_8" class="ob-secret" type="password" placeholder="secret" />
+    <input id="item_8" class="ob-input w-52" type="password" placeholder="secret" />
     <label for="item_9" class="invisible"></label>
-    <input id="item_9" class="ob-secret" type="password" placeholder="secret" />
-    <div class="w-full inline-flex items-center justify-center">
-      <button
-        id="go-to-options"
-        class="text-indigo-400 background-transparent m-1.5 px-3 py-1 text-xs outline-none focus:outline-none ease-linear transition-all duration-150"
-      >
-        Advanced options
-      </button>
+    <input id="item_9" class="ob-input w-52" type="password" placeholder="secret" />
+
+    <div class="ob-center">
+      <button id="go-to-options" class="ob-button-link">Advanced options</button>
     </div>
     <script src="popup.js"></script>
   </body>

@@ -28,7 +28,7 @@ const config: Configuration = {
             loader: "postcss-loader",
             options: {
               postcssOptions: {
-                plugins: ["tailwindcss"],
+                plugins: ["postcss-import", "tailwindcss"],
               },
             },
           },

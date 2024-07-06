@@ -1,4 +1,5 @@
 import { NUMBER_OF_CSS_SELECTORS, StoredConfig } from "./constants"
+import "./options.css"
 
 chrome.storage.sync.get(null, (data) => {
   const config = data as StoredConfig
