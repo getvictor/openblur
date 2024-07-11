@@ -4,10 +4,15 @@ import "./popup.css"
 console.debug("OpenBlur popup script loaded")
 
 const checkbox = document.getElementById("enabled") as HTMLInputElement
+const checkboxSpan = document.getElementById("enabled-span") as HTMLInputElement
 chrome.storage.sync.get(null, (data) => {
   console.debug("OpenBlur got data from storage", data)
   const config = data as StoredConfig
   checkbox.checked = !(config.mode?.id === "off")
+  // Once we set the checkbox to its initial value, enable transition animation for it
+  setTimeout(() => {
+    checkboxSpan.classList.add("ob-enable-span-transition")
+  }, 500)
   const mode = config.mode ?? MODES[1]
   void chrome.action.setIcon({ path: MODES[mode.index].icon })
   const literals: string[] = config.literals ?? []

@@ -9,7 +9,11 @@
 }
 
 .ob-enable-span {
-  @apply m-1.5 relative w-16 h-8 bg-gray-200 rounded-full after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7 after:transition-all;
+  @apply m-1.5 relative w-16 h-8 bg-gray-200 rounded-full after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7;
+}
+
+.ob-enable-span-transition {
+  @apply after:transition-all;
 }
 
 .ob-button-link {
