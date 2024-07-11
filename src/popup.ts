@@ -3,6 +3,61 @@ import "./popup.css"
 
 console.debug("OpenBlur popup script loaded")
 
+const debounce = function <T extends (...args: Parameters<T>) => ReturnType<T>>(
+  callback: T,
+  waitMs: number,
+): (...args: Parameters<T>) => void {
+  let debounceTimer: number
+  return function (this: ThisParameterType<T>, ...args: Parameters<T>): void {
+    window.clearTimeout(debounceTimer)
+    debounceTimer = window.setTimeout(() => callback.apply(this, args), waitMs)
+  }
+}
+
+let literals: string[] = []
+const getInputListener = (i: number) => {
+  const listener: EventListener = (event: Event) => {
+    if (event.target instanceof HTMLInputElement) {
+      if (literals[i] === event.target.value) {
+        // No change
+        return
+      }
+      literals[i] = event.target.value
+      void chrome.storage.sync.set({ literals })
+      // Send message to content script in all tabs
+      void chrome.tabs
+        .query({})
+        .then((tabs) => {
+          for (const tab of tabs) {
+            console.debug(
+              "OpenBlur Sending literals message to tab id %d, title '%s' url %s",
+              tab.id,
+              tab.title,
+              tab.url,
+            )
+            if (tab.id !== undefined) {
+              chrome.tabs.sendMessage(tab.id, { literals }).catch((error: unknown) => {
+                // We ignore tabs without a proper URL, like chrome://extensions/
+                if (tab.url) {
+                  console.info(
+                    "OpenBlur Could not send message to tab with title '%s' and url %s. Was OpenBlur just installed?",
+                    tab.title,
+                    tab.url,
+                    error,
+                  )
+                }
+              })
+            }
+          }
+        })
+        .catch((error: unknown) => {
+          console.error("OpenBlur Could not query tabs", error)
+        })
+    }
+  }
+  return listener
+}
+
 const checkbox = document.getElementById("enabled") as HTMLInputElement
 const checkboxSpan = document.getElementById("enabled-span") as HTMLInputElement
 chrome.storage.sync.get(null, (data) => {
@@ -15,47 +70,15 @@ chrome.storage.sync.get(null, (data) => {
   }, 500)
   const mode = config.mode ?? MODES[1]
   void chrome.action.setIcon({ path: MODES[mode.index].icon })
-  const literals: string[] = config.literals ?? []
+  literals = config.literals ?? []
 
   // Loop over NUMBER_OF_LITERALS elements and listen to each one.
   for (let i = 0; i < NUMBER_OF_LITERALS; i++) {
     const input = document.getElementById(`item_${String(i)}`) as HTMLInputElement
     input.value = literals[i] || ""
-    input.addEventListener("change", (event) => {
-      if (event.target instanceof HTMLInputElement) {
-        literals[i] = event.target.value
-        void chrome.storage.sync.set({ literals })
-        // Send message to content script in all tabs
-        void chrome.tabs
-          .query({})
-          .then((tabs) => {
-            for (const tab of tabs) {
-              console.debug(
-                "OpenBlur Sending literals message to tab id %d, title '%s' url %s",
-                tab.id,
-                tab.title,
-                tab.url,
-              )
-              if (tab.id !== undefined) {
-                chrome.tabs.sendMessage(tab.id, { literals }).catch((error: unknown) => {
-                  // We ignore tabs without a proper URL, like chrome://extensions/
-                  if (tab.url) {
-                    console.info(
-                      "OpenBlur Could not send message to tab with title '%s' and url %s. Was OpenBlur just installed?",
-                      tab.title,
-                      tab.url,
-                      error,
-                    )
-                  }
-                })
-              }
-            }
-          })
-          .catch((error: unknown) => {
-            console.error("OpenBlur Could not query tabs", error)
-          })
-      }
-    })
+    // Listening to "input" updates the value while typing
+    input.addEventListener("input", debounce(getInputListener(i), 1000))
+    input.addEventListener("change", getInputListener(i))
   }
 })
 checkbox.addEventListener("change", (event) => {
