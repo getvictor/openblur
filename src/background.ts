@@ -3,21 +3,51 @@ import { Message, Mode, MODES } from "./constants"
 const cssToInject = "body { visibility: hidden; }"
 
 let currentModeIndex = 1
+let startupDone = false
 
 console.debug("OpenBlur service worker script loaded")
 
 function startUp() {
+  if (startupDone) {
+    return
+  }
+  startupDone = true
   chrome.storage.sync.get("mode", (data) => {
     if (data.mode && typeof data.mode === "object") {
       currentModeIndex = (data.mode as Mode).index
     }
     void chrome.action.setIcon({ path: MODES[currentModeIndex].icon })
   })
+  // Inject script into all tabs.
+  chrome.tabs
+    .query({})
+    .then((tabs) => {
+      for (const tab of tabs) {
+        if (tab.id !== undefined) {
+          const target: chrome.scripting.InjectionTarget = {
+            tabId: tab.id,
+            allFrames: true,
+          }
+          chrome.scripting
+            .executeScript({
+              target: target,
+              files: ["content.js"],
+            })
+            .catch((error: unknown) => {
+              console.info("OpenBlur could not inject content script into tab %d", tab.id, error)
+            })
+        }
+      }
+    })
+    .catch((error: unknown) => {
+      console.error("OpenBlur service worker could not query tabs at startup", error)
+    })
 }
 
 // Ensure the background script always runs.
 chrome.runtime.onStartup.addListener(startUp)
 chrome.runtime.onInstalled.addListener(startUp)
+startUp()
 
 // Hide the body content until OpenBlur processes the content and blurs the secrets.
 chrome.webNavigation.onCommitted.addListener(function (details) {
