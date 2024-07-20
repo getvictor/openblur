@@ -2,7 +2,7 @@ import { Message, NUMBER_OF_LITERALS, StoredConfig } from "./constants"
 import Optimizer from "./optimizer"
 
 // These unique filter values identify the OpenBlur filter.
-const blurFilter = "blur(0.343em)"
+export const blurFilter = "blur(0.343em)"
 const blurSelectorFilter = "blur(0.344em)"
 const tagsNotToBlur = ["HEAD", "SCRIPT", "STYLE", "loc"]
 
@@ -438,7 +438,7 @@ chrome.storage.sync.get(null, (data) => {
   }
 })
 
-function handleMessage(request: unknown) {
+export function handleMessage(request: unknown) {
   console.debug("OpenBlur received message from popup", request)
   const message = request as Message
 
