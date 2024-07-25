@@ -1,6 +1,3 @@
-/**
- * @jest-environment jsdom
- */
 import { blurFilter, handleMessage } from "./content"
 import { Message } from "./constants"
 

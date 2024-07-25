@@ -1,4 +1,5 @@
-/* global global, jest -- for eslint */
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 global.chrome = {
   runtime: {
     onMessage: {
