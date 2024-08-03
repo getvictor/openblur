@@ -65,7 +65,7 @@ chrome.storage.sync.get(null, (data) => {
   disabledDomainsElement.value = disabledDomains
   disabledDomainsElement.addEventListener("change", (event) => {
     if (event.target instanceof HTMLTextAreaElement) {
-      const value = event.target.value.trim()
+      const value = event.target.value.trim().replace(/\n/g, ",")
       const domains = value
         .split(",")
         .map((domain) => domain.trim())
