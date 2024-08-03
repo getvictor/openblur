@@ -80,6 +80,16 @@ chrome.storage.sync.get(null, (data) => {
     input.addEventListener("input", debounce(getInputListener(i), 1000))
     input.addEventListener("change", getInputListener(i))
   }
+
+  // Listen to "show" item.
+  const show = document.getElementById(`items_show`) as HTMLOrSVGImageElement
+  show.addEventListener("click", () => {
+    // Switch between text and password type
+    for (let i = 0; i < NUMBER_OF_LITERALS; i++) {
+      const input = document.getElementById(`item_${String(i)}`) as HTMLInputElement
+      input.type = input.type === "text" ? "password" : "text"
+    }
+  })
 })
 checkbox.addEventListener("change", (event) => {
   if (event.target instanceof HTMLInputElement) {
