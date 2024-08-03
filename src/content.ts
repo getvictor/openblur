@@ -385,7 +385,7 @@ function setCssSelectors(selectors: string[], unblur?: boolean) {
             }
           })
         } catch (error: unknown) {
-          console.info("OpenBlur could not query CSS selector:", selector)
+          console.info("OpenBlur could not query CSS selector:", selector, error)
         }
       }
     }
@@ -413,7 +413,7 @@ function setCssSelectors(selectors: string[], unblur?: boolean) {
             }
           })
         } catch (error: unknown) {
-          console.info("OpenBlur could not query CSS selector:", selector)
+          console.info("OpenBlur could not query CSS selector:", selector, error)
         }
         if (count > 0) {
           console.debug("OpenBlur blurred %d elements with selector %s", count, selector)
