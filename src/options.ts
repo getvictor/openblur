@@ -11,7 +11,19 @@ chrome.storage.sync.get(null, (data) => {
     input.value = cssSelectors[i] || ""
     input.addEventListener("change", (event) => {
       if (event.target instanceof HTMLInputElement) {
-        cssSelectors[i] = event.target.value
+        const value = event.target.value.trim()
+        if (value !== "") {
+          // Validate target value
+          try {
+            document.querySelectorAll(value)
+          } catch (error: unknown) {
+            event.target.classList.add("ob-input-error")
+            console.info("OpenBlur invalid CSS selector:", value, error)
+            return
+          }
+        }
+        event.target.classList.remove("ob-input-error")
+        cssSelectors[i] = value
         void chrome.storage.sync.set({ cssSelectors })
         // Send message to content script in all tabs
         void chrome.tabs

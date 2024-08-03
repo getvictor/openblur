@@ -5,3 +5,7 @@
 .ob-input {
   @apply block m-1.5 p-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500;
 }
+
+.ob-input-error {
+  @apply bg-red-50 border-red-500 text-red-900 placeholder-red-700 focus:ring-red-500 focus:border-red-500;
+}
