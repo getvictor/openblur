@@ -11,12 +11,14 @@ export interface Message {
   mode?: Mode
   literals?: string[]
   cssSelectors?: string[]
+  disabledDomains?: string
 }
 
 export interface StoredConfig {
   mode?: Mode
   literals?: string[]
   cssSelectors?: string[]
+  disabledDomains?: string
 }
 
 export const MODES: Mode[] = [

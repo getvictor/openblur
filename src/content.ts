@@ -431,6 +431,9 @@ chrome.storage.sync.get(null, (data) => {
   if (config.mode?.id === "off") {
     enabled = false
   }
+  if (isDisabledForDomain(config.disabledDomains)) {
+    enabled = false
+  }
   const literals: string[] = config.literals ?? []
   setLiterals(literals)
   if (config.cssSelectors && config.cssSelectors.length > 0) {
@@ -438,24 +441,31 @@ chrome.storage.sync.get(null, (data) => {
   }
 })
 
+function isDisabledForDomain(disabledDomains: string | undefined) {
+  if (!disabledDomains) {
+    return false
+  }
+  const hostname = window.location.hostname
+  const domains = disabledDomains.split(",").map((domain) => domain.trim())
+  return domains.includes(hostname)
+}
+
 export function handleMessage(request: unknown) {
   console.debug("OpenBlur received message from popup", request)
   const message = request as Message
 
   if (message.mode) {
     if (message.mode.id === "off") {
-      enabled = false
-      disconnect()
-      processNode(document, new Set<HTMLElement>())
-      if (performanceOptimizationMode) {
-        Optimizer.clear()
-        performanceOptimizationMode = false
-      }
-      setCssSelectors(localConfig.cssSelectors ?? [], true) // clear selector blurs
+      disableOnMessage()
     } else {
-      enabled = true
-      observe()
-      setCssSelectors(localConfig.cssSelectors ?? [])
+      enableOnMessage()
+    }
+  }
+  if (message.disabledDomains !== undefined) {
+    if (isDisabledForDomain(message.disabledDomains)) {
+      disableOnMessage()
+    } else {
+      enableOnMessage()
     }
   }
   if (message.literals) {
@@ -464,6 +474,23 @@ export function handleMessage(request: unknown) {
   if (message.cssSelectors) {
     setCssSelectors(message.cssSelectors)
   }
+}
+
+function disableOnMessage() {
+  enabled = false
+  disconnect()
+  processNode(document, new Set<HTMLElement>())
+  if (performanceOptimizationMode) {
+    Optimizer.clear()
+    performanceOptimizationMode = false
+  }
+  setCssSelectors(localConfig.cssSelectors ?? [], true) // clear selector blurs
+}
+
+function enableOnMessage() {
+  enabled = true
+  observe()
+  setCssSelectors(localConfig.cssSelectors ?? [])
 }
 
 // Listen for messages from popup.
@@ -490,3 +517,7 @@ window.addEventListener("pagehide", (event) => {
     chrome.runtime.onMessage.removeListener(handleMessage)
   }
 })
+
+export function setEnabled(value: boolean) {
+  enabled = value
+}
