@@ -9,7 +9,6 @@ const tagsNotToBlur = ["HEAD", "SCRIPT", "STYLE", "loc"]
 const contentToBlur: string[] = []
 let enabled = true
 let bodyHidden = true
-let doFullScan = false
 const localConfig: StoredConfig = {
   cssSelectors: [],
 }
@@ -88,21 +87,14 @@ function processNodeWithParent(node: Node) {
   processNode(target, new Set<HTMLElement>())
 }
 
-function processHtmlElement(
-  parent: HTMLElement | null,
-  text: string,
-  blurredElements: Set<HTMLElement>,
-  checkContent: boolean,
-) {
+function processHtmlElement(parent: HTMLElement | null, text: string, blurredElements: Set<HTMLElement>) {
   if (parent?.style) {
-    let useGrandParent = false
     if (performanceOptimizationMode && parent.parentElement instanceof HTMLElement) {
       // In performance optimization mode, we may blur the parent's parent.
       const grandParent = parent.parentElement
       if (grandParent.style.filter.includes(blurFilter)) {
         // Treat the grandparent as the parent.
         parent = grandParent
-        useGrandParent = true
       }
     }
     if (blurredElements.has(parent)) {
@@ -118,16 +110,14 @@ function processHtmlElement(
       }
       // In performance optimization mode, the grandparent may have been updated to have
       // completely different content.
-      if (checkContent || useGrandParent) {
-        // Double check if the blur is still needed.
-        const blurNeeded = contentToBlur.some((content) => {
-          return text.includes(content)
-        })
-        if (!blurNeeded) {
-          unblurElement(parent)
-        } else {
-          blurredElements.add(parent)
-        }
+      // Double check if the blur is still needed.
+      const blurNeeded = contentToBlur.some((content) => {
+        return text.includes(content)
+      })
+      if (!blurNeeded) {
+        unblurElement(parent)
+      } else {
+        blurredElements.add(parent)
       }
       return
     } else if (enabled) {
@@ -141,13 +131,14 @@ function processHtmlElement(
   }
 }
 
-function processNode(node: Node, blurredElements: Set<HTMLElement>) {
+export function processNode(node: Node, blurredElements: Set<HTMLElement>) {
   if (node instanceof HTMLElement && tagsNotToBlur.includes(node.tagName)) {
     return
   }
   if (node.nodeType === Node.TEXT_NODE && node.textContent !== null && node.textContent.trim().length > 0) {
     const text = node.textContent
-    processHtmlElement(node.parentElement, text, blurredElements, doFullScan)
+    processHtmlElement(node.parentElement, text, blurredElements)
+    return
   } else if (node.nodeType === Node.ELEMENT_NODE) {
     const elem = node as HTMLElement
     switch (elem.tagName) {
@@ -157,13 +148,13 @@ function processNode(node: Node, blurredElements: Set<HTMLElement>) {
           processInputElement(input, blurredElements)
           input.addEventListener("input", inputEventListener)
         }
-        break
+        return
       }
       case "TEXTAREA": {
         const textarea = elem as HTMLTextAreaElement
         processInputElement(textarea, blurredElements)
         textarea.addEventListener("input", inputEventListener)
-        break
+        return
       }
       case "SELECT": {
         const select = elem as HTMLSelectElement
@@ -171,20 +162,30 @@ function processNode(node: Node, blurredElements: Set<HTMLElement>) {
         if (select.selectedIndex >= 0) {
           text = select.options[select.selectedIndex].text
         }
-        processHtmlElement(select, text, blurredElements, true)
+        processHtmlElement(select, text, blurredElements)
         select.addEventListener("change", selectOnChangeListener)
-        break
-      }
-      default: {
-        if (node.childNodes.length > 0) {
-          Array.from(node.childNodes).forEach((value) => {
-            processNode(value, blurredElements)
-          })
-        }
+        return
       }
     }
-  } else {
-    if (node.childNodes.length > 0) {
+  }
+  // We should only get here if node has not been processed
+  if (node.childNodes.length > 0) {
+    if (node instanceof HTMLElement) {
+      let blurred = false
+      const startingCount = blurredElements.size
+      if (node.style.filter.includes(blurFilter)) {
+        blurred = true
+      }
+      Array.from(node.childNodes).forEach((value) => {
+        processNode(value, blurredElements)
+      })
+      if (blurred && startingCount >= blurredElements.size) {
+        // The element was already blurred, but no children were blurred.
+        // So we unblur.
+        // This will trigger a second pass by blurStyleObserver. This is fine since this situation is rare.
+        unblurElement(node)
+      }
+    } else {
       Array.from(node.childNodes).forEach((value) => {
         processNode(value, blurredElements)
       })
@@ -197,7 +198,10 @@ function processNode(node: Node, blurredElements: Set<HTMLElement>) {
 const blurStyleObserver = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
     if (mutation.type === "attributes") {
-      processNodeWithParent(mutation.target)
+      const elem = mutation.target as HTMLElement
+      if (!elem.style.filter.includes(blurFilter)) {
+        processNodeWithParent(mutation.target)
+      }
     }
   })
 })
@@ -315,7 +319,7 @@ function selectOnChangeListener(event: Event) {
     if (select.selectedIndex >= 0) {
       text = select.options[select.selectedIndex].text
     }
-    processHtmlElement(select, text, new Set<HTMLElement>(), true)
+    processHtmlElement(select, text, new Set<HTMLElement>())
   }
 }
 
@@ -353,9 +357,7 @@ function setLiterals(literals: string[]) {
     }
   }
   if (enabled) {
-    doFullScan = true
     observe()
-    doFullScan = false
   }
   unhideBody()
 }
