@@ -16,11 +16,19 @@ This project is under active development. Pull requests and issues are welcome.
 - Financial information (e.g. credit card numbers, bank account numbers).
 - Any other information that you don't want to be seen by others.
 
-## Install OpenBlur video instructions
+## Installation
+
+### Option 1. Install from Chrome Web Store
+
+[OpenBlur on Chrome Web Store](https://chromewebstore.google.com/detail/openblur/dlnglldcaegkgmhmmhhdknblccppichf)
+
+### Option 2. Install from release as an unpacked extension
+
+#### Install OpenBlur from GitHub release video instructions
 
 [![Install OpenBlur Chrome extension](http://img.youtube.com/vi/0uQiV4Bxc5I/0.jpg)](http://www.youtube.com/watch?v=0uQiV4Bxc5I)
 
-## Building the extension from source
+### Option 3. Build from source
 
 - `npm install`
 - `npm run build`
