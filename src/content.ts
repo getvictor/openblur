@@ -46,7 +46,7 @@ function processInputElement(input: HTMLInputElement | HTMLTextAreaElement, blur
     // This element has already been blurred in this pass
     return
   }
-  const text = (input.value || input.getAttribute("value")) ?? ""
+  const text = ((input.value || input.getAttribute("value")) ?? "").toLowerCase()
   if (blurTarget.style.filter.includes(blurFilter)) {
     // Already blurred
     if (!enabled) {
@@ -101,6 +101,7 @@ function processHtmlElement(parent: HTMLElement | null, text: string, blurredEle
       // This element has already been blurred in this pass.
       return
     }
+    text = text.toLowerCase()
     if (parent.style.filter.includes(blurFilter)) {
       // Already blurred
       if (!enabled) {
@@ -353,7 +354,7 @@ function setLiterals(literals: string[]) {
   for (let i = 0; i < NUMBER_OF_LITERALS; i++) {
     const item: string = literals[i]
     if (item && item.trim().length > 0) {
-      contentToBlur.push(item.trim())
+      contentToBlur.push(item.trim().toLowerCase())
     }
   }
   if (enabled) {

@@ -13,7 +13,7 @@ describe("blur", () => {
   test("blur a secret", () => {
     document.body.innerHTML = `
     <div id="testDiv">
-      "My secret"
+      "My Secret"
     </div>`
     // Set value to blur as a message
     const message: Message = {
