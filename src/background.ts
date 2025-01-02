@@ -1,6 +1,6 @@
 import { Message, Mode, MODES } from "./constants"
 
-const cssToInject = "body { visibility: hidden; }"
+const cssToInject = "body { filter: opacity(0%); }"
 
 let currentModeIndex = 1
 let startupDone = false

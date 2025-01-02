@@ -96,6 +96,10 @@ checkbox.addEventListener("change", (event) => {
     const mode = event.target.checked ? MODES[1] : MODES[0]
     void chrome.storage.sync.set({ mode: mode })
     void chrome.action.setIcon({ path: mode.icon })
+    // Send message to service worker
+    chrome.runtime.sendMessage({ action: "mode", mode: mode }).catch((error: unknown) => {
+      console.error("OpenBlur Could not send message to service worker", error)
+    })
     // Send message to content script in all tabs
     chrome.tabs
       .query({})
