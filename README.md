@@ -33,3 +33,25 @@ This project is under active development. Pull requests and issues are welcome.
 - `npm install`
 - `npm run build`
 - Load the `dist` folder as an unpacked extension in Chrome
+
+## Updating dependencies
+
+We strive to keep our dependencies up to date.
+
+Check for outdated dependencies:
+
+```bash
+npm outdated
+```
+
+Update dependencies:
+
+```bash
+npm update
+```
+
+If some dependencies are not updated, you can manually update them like:
+
+```bash
+npm install package-name@latest
+```
