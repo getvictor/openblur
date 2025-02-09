@@ -75,6 +75,11 @@ chrome.storage.sync.get(null, (data) => {
       if (disabledDomains !== updatedDomains) {
         disabledDomains = updatedDomains
         void chrome.storage.sync.set({ disabledDomains })
+        // Send message to service worker
+        const message: Message = { disabledDomains }
+        chrome.runtime.sendMessage(message).catch((error: unknown) => {
+          console.error("OpenBlur Could not send message to service worker", error)
+        })
         // Send message to content script in all tabs
         void chrome.tabs
           .query({})
@@ -87,7 +92,6 @@ chrome.storage.sync.get(null, (data) => {
                 tab.url,
               )
               if (tab.id !== undefined) {
-                const message: Message = { disabledDomains }
                 chrome.tabs.sendMessage(tab.id, message).catch((error: unknown) => {
                   // We ignore tabs without a proper URL, like chrome://extensions/
                   if (tab.url) {

@@ -1,9 +1,10 @@
-import { Message, Mode, MODES } from "./constants"
+import { Message, MODES, StoredConfig } from "./constants"
 
 const cssToInject = "body { filter: opacity(0%); }"
 
-let currentModeIndex = 1
 let startupDone = false
+let config: StoredConfig = {}
+let disabledDomains: string[] = []
 
 console.debug("OpenBlur service worker script loaded")
 
@@ -12,11 +13,9 @@ function startUp() {
     return
   }
   startupDone = true
-  chrome.storage.sync.get("mode", (data) => {
-    if (data.mode && typeof data.mode === "object") {
-      currentModeIndex = (data.mode as Mode).index
-    }
-    void chrome.action.setIcon({ path: MODES[currentModeIndex].icon })
+  chrome.storage.sync.get(null, (data) => {
+    setConfig(data as StoredConfig)
+    void chrome.action.setIcon({ path: MODES[getModeIndex()].icon })
   })
   // Inject script into all tabs.
   chrome.tabs
@@ -51,21 +50,49 @@ startUp()
 
 // Hide the body content until OpenBlur processes the content and blurs the secrets.
 chrome.webNavigation.onCommitted.addListener(function (details) {
-  if (MODES[currentModeIndex].id === "on") {
-    const target: chrome.scripting.InjectionTarget = {
-      tabId: details.tabId,
-      frameIds: [details.frameId],
-    }
+  if (isDomainDisabled(details.url)) {
+    return
+  }
+
+  const target: chrome.scripting.InjectionTarget = {
+    tabId: details.tabId,
+    frameIds: [details.frameId],
+  }
+  chrome.scripting
+    .insertCSS({
+      css: cssToInject,
+      target: target,
+    })
+    .catch((error: unknown) => {
+      console.info("OpenBlur Could not inject CSS into tab %d", details.tabId, error)
+    })
+
+  // To prevent CSS from getting stuck on the page, we remove it after a delay.
+  // This is an issue with Vivaldi browser: https://github.com/getvictor/openblur/issues/30
+  const removeBlurCSSDelay = 2000
+  setTimeout(() => {
     chrome.scripting
-      .insertCSS({
+      .removeCSS({
         css: cssToInject,
         target: target,
       })
-      .catch((error: unknown) => {
-        console.info("OpenBlur Could not inject CSS into tab %d", details.tabId, error)
+      .catch(() => {
+        // Ignore error. It is expected that the CSS cannot be removed if it was already removed.
       })
-  }
+  }, removeBlurCSSDelay)
 })
+
+function isDomainDisabled(url: string): boolean {
+  if (MODES[getModeIndex()].id !== "on") {
+    // if OpenBlur is off
+    return true
+  }
+  if (disabledDomains.length === 0 || !url) {
+    return false
+  }
+  const urlObject = new URL(url)
+  return disabledDomains.includes(urlObject.hostname)
+}
 
 // Unhide the body content.
 chrome.runtime.onMessage.addListener(function (request, sender) {
@@ -84,11 +111,36 @@ chrome.runtime.onMessage.addListener(function (request, sender) {
           target: target,
         })
         .catch((error: unknown) => {
-          console.info("OpenBlur Could not remove CSS from tab %d", target.tabId, error)
+          console.debug("OpenBlur Could not remove CSS from tab %d. Was it already removed?", target.tabId, error)
         })
     }
   }
   if (message.mode) {
-    currentModeIndex = message.mode.index
+    config.mode = message.mode
+  }
+  if (message.disabledDomains) {
+    config.disabledDomains = message.disabledDomains
+    setDisabledDomains()
   }
 })
+
+function getModeIndex(): number {
+  if (config.mode) {
+    return config.mode.index
+  }
+  return 1
+}
+
+function setConfig(newConfig: StoredConfig) {
+  config = newConfig
+  setDisabledDomains()
+}
+
+function setDisabledDomains() {
+  if (config.disabledDomains) {
+    // Pre-processing disabled domains for performance
+    disabledDomains = config.disabledDomains.split(",").map((domain) => domain.trim())
+  } else {
+    disabledDomains = []
+  }
+}
